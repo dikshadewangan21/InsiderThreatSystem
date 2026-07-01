@@ -1,0 +1,17 @@
+# Ignore dataset
+data/raw/
+data/processed/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Models
+models/
+*.pkl
+*.joblib
+
+# VS Code
+.vscode/
