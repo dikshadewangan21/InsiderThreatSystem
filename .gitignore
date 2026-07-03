@@ -15,3 +15,12 @@ models/
 
 # VS Code
 .vscode/
+
+# Generated graph outputs
+graph/output/
+
+# PyTorch files
+*.pt
+
+# Logs
+*.log
