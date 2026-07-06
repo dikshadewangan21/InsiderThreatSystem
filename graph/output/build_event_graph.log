@@ -1,0 +1,399 @@
+2026-07-01 14:59:22 | INFO     | ==============================================================================
+2026-07-01 14:59:22 | INFO     | Starting temporal heterogeneous event graph build
+2026-07-01 14:59:22 | INFO     | ==============================================================================
+2026-07-01 14:59:22 | INFO     | Loading LDAP directory snapshot from data\processed\ldap.csv
+2026-07-01 15:01:25 | INFO     | ==============================================================================
+2026-07-01 15:01:25 | INFO     | Starting temporal heterogeneous event graph build
+2026-07-01 15:01:25 | INFO     | ==============================================================================
+2026-07-01 15:01:25 | INFO     | Loading LDAP directory snapshot from data\processed\LDAP.csv
+2026-07-01 15:10:15 | INFO     | ==============================================================================
+2026-07-01 15:10:15 | INFO     | Starting temporal heterogeneous event graph build
+2026-07-01 15:10:15 | INFO     | ==============================================================================
+2026-07-01 15:10:15 | INFO     | Loading LDAP directory snapshot from data\raw\LDAP.csv
+2026-07-01 15:10:15 | INFO     | Loaded LDAP records for 16,743 identities
+2026-07-01 15:10:15 | INFO     | Loading fused user features from data\processed\fused_features.csv
+2026-07-01 15:10:16 | WARNING  | Dropping 8 non-numeric feature column(s) that cannot be placed in a float tensor as-is: ['employee_name', 'email', 'role', 'functional_unit', 'department', 'team', 'supervisor', 'employee_name_psychometric']
+2026-07-01 15:10:16 | INFO     | Loaded 1,000 users with 47 raw feature dimensions each
+2026-07-01 15:10:16 | INFO     | Loading file sensitivity table from data\processed\file_sensitivity.csv
+2026-07-01 15:10:16 | INFO     | Loaded sensitivity scores for 6 file extensions
+2026-07-01 15:10:16 | INFO     | [MEMORY] after loading static tables: 402.0 MB RSS
+2026-07-01 15:10:16 | INFO     | Building structural edges from LDAP (each exists exactly once per user)
+2026-07-01 15:10:16 | INFO     | [EDGES] User-belongs_to->Department: 1,000 structural edges
+2026-07-01 15:10:16 | INFO     | [EDGES] User-has_role->Role: 1,000 structural edges
+2026-07-01 15:10:16 | INFO     | [EDGES] User-member_of->Team: 1,000 structural edges
+2026-07-01 15:10:16 | INFO     | [EDGES] User-part_of->BusinessUnit: 1,000 structural edges
+2026-07-01 15:10:16 | INFO     | [EDGES] User-works_with->User: 0 structural edges
+2026-07-01 15:10:16 | INFO     | Streaming events from data\processed\unified_events.csv in chunks of 500,000 rows
+2026-07-01 15:10:17 | INFO     | [STREAM] chunk=0 rows_so_far=500,000 rate=869,395 rows/sec
+2026-07-01 15:10:17 | INFO     | [MEMORY] after chunk 0: 439.5 MB RSS
+2026-07-01 15:10:21 | INFO     | [STREAM] chunk=5 rows_so_far=3,000,000 rate=649,303 rows/sec
+2026-07-01 15:10:21 | INFO     | [MEMORY] after chunk 5: 632.6 MB RSS
+2026-07-01 15:10:24 | INFO     | [STREAM] chunk=10 rows_so_far=5,500,000 rate=655,865 rows/sec
+2026-07-01 15:10:24 | INFO     | [MEMORY] after chunk 10: 697.6 MB RSS
+2026-07-01 15:10:28 | INFO     | [STREAM] chunk=15 rows_so_far=8,000,000 rate=657,477 rows/sec
+2026-07-01 15:10:28 | INFO     | [MEMORY] after chunk 15: 697.6 MB RSS
+2026-07-01 15:10:32 | INFO     | [STREAM] chunk=20 rows_so_far=10,500,000 rate=659,794 rows/sec
+2026-07-01 15:10:32 | INFO     | [MEMORY] after chunk 20: 696.6 MB RSS
+2026-07-01 15:10:36 | INFO     | [STREAM] chunk=25 rows_so_far=13,000,000 rate=659,833 rows/sec
+2026-07-01 15:10:36 | INFO     | [MEMORY] after chunk 25: 696.8 MB RSS
+2026-07-01 15:10:40 | INFO     | [STREAM] chunk=30 rows_so_far=15,500,000 rate=660,061 rows/sec
+2026-07-01 15:10:40 | INFO     | [MEMORY] after chunk 30: 696.8 MB RSS
+2026-07-01 15:10:43 | INFO     | [STREAM] chunk=35 rows_so_far=18,000,000 rate=660,318 rows/sec
+2026-07-01 15:10:43 | INFO     | [MEMORY] after chunk 35: 696.8 MB RSS
+2026-07-01 15:10:47 | INFO     | [STREAM] chunk=40 rows_so_far=20,500,000 rate=660,124 rows/sec
+2026-07-01 15:10:47 | INFO     | [MEMORY] after chunk 40: 697.9 MB RSS
+2026-07-01 15:10:51 | INFO     | [STREAM] chunk=45 rows_so_far=23,000,000 rate=661,578 rows/sec
+2026-07-01 15:10:51 | INFO     | [MEMORY] after chunk 45: 697.9 MB RSS
+2026-07-01 15:10:55 | INFO     | [STREAM] chunk=50 rows_so_far=25,500,000 rate=661,637 rows/sec
+2026-07-01 15:10:55 | INFO     | [MEMORY] after chunk 50: 697.9 MB RSS
+2026-07-01 15:10:59 | INFO     | [STREAM] chunk=55 rows_so_far=28,000,000 rate=659,335 rows/sec
+2026-07-01 15:10:59 | INFO     | [MEMORY] after chunk 55: 697.9 MB RSS
+2026-07-01 15:11:02 | INFO     | [STREAM] chunk=60 rows_so_far=30,500,000 rate=659,287 rows/sec
+2026-07-01 15:11:02 | INFO     | [MEMORY] after chunk 60: 708.9 MB RSS
+2026-07-01 15:11:06 | INFO     | [STREAM] chunk=65 rows_so_far=32,704,166 rate=658,973 rows/sec
+2026-07-01 15:11:06 | INFO     | [MEMORY] after chunk 65: 714.5 MB RSS
+2026-07-01 15:11:06 | INFO     | Finished streaming 32,704,166 rows in 49.8s
+2026-07-01 15:11:06 | WARNING  | 2,629,700 row(s) had an event_type outside ['logon', 'logoff', 'device', 'http', 'file'] and have no declared temporal edge type in this schema; they were not converted into edges (see module docstring, assumption #1).
+2026-07-01 15:11:06 | INFO     | [EDGES] User->PC: 0 temporal edges
+2026-07-01 15:11:06 | INFO     | [EDGES] User->WebsiteDomain: 0 temporal edges
+2026-07-01 15:11:06 | INFO     | [EDGES] User->FileExtension: 0 temporal edges
+2026-07-01 15:11:06 | INFO     | [MEMORY] after streaming events: 712.9 MB RSS
+2026-07-01 15:11:06 | INFO     | Assembling HeteroData graph object
+2026-07-01 15:11:06 | INFO     | HeteroData(
+  User={
+    x=[1000, 47],
+    num_nodes=1000,
+  },
+  Department={
+    x=[1, 1],
+    num_nodes=1,
+  },
+  Role={
+    x=[1, 1],
+    num_nodes=1,
+  },
+  Team={
+    x=[1, 1],
+    num_nodes=1,
+  },
+  BusinessUnit={
+    x=[1, 1],
+    num_nodes=1,
+  },
+  PC={
+    x=[0, 1],
+    num_nodes=0,
+  },
+  WebsiteDomain={
+    x=[0, 1],
+    num_nodes=0,
+  },
+  FileExtension={
+    x=[0, 2],
+    num_nodes=0,
+  },
+  (User, belongs_to, Department)={ edge_index=[2, 1000] },
+  (User, has_role, Role)={ edge_index=[2, 1000] },
+  (User, member_of, Team)={ edge_index=[2, 1000] },
+  (User, part_of, BusinessUnit)={ edge_index=[2, 1000] },
+  (User, works_with, User)={ edge_index=[2, 0] },
+  (User, accesses, PC)={
+    edge_index=[2, 0],
+    edge_time=[0],
+    raw_timestamp=[0],
+    event_type=[0],
+    event_index=[0],
+    resource=[0],
+    target_user=[0],
+  },
+  (User, visits, WebsiteDomain)={
+    edge_index=[2, 0],
+    edge_time=[0],
+    raw_timestamp=[0],
+    event_type=[0],
+    event_index=[0],
+    resource=[0],
+    target_user=[0],
+  },
+  (User, touches, FileExtension)={
+    edge_index=[2, 0],
+    edge_time=[0],
+    raw_timestamp=[0],
+    event_type=[0],
+    event_index=[0],
+    resource=[0],
+    target_user=[0],
+  }
+)
+2026-07-01 15:11:06 | INFO     | Running graph validation suite
+2026-07-01 15:11:06 | ERROR    | [VALIDATION] Edge type ('User', 'works_with', 'User') is empty
+2026-07-01 15:11:06 | ERROR    | [VALIDATION] Edge type ('User', 'accesses', 'PC') is empty
+2026-07-01 15:11:06 | ERROR    | [VALIDATION] Edge type ('User', 'visits', 'WebsiteDomain') is empty
+2026-07-01 15:11:06 | ERROR    | [VALIDATION] Edge type ('User', 'touches', 'FileExtension') is empty
+2026-07-01 15:11:06 | WARNING  | [VALIDATION] 4 issue(s) found
+2026-07-01 15:11:06 | INFO     | Saving graph to graph\output\heterogeneous_graph.pt
+2026-07-01 15:11:06 | INFO     | Saving preprocessing artifacts to graph\output\preprocessing_artifacts.pkl
+2026-07-01 15:11:06 | INFO     | Save complete
+2026-07-01 15:11:06 | INFO     | ==============================================================================
+2026-07-01 15:11:06 | INFO     | BUILD SUMMARY
+2026-07-01 15:11:06 | INFO     |   Users:                          1,000
+2026-07-01 15:11:06 | INFO     |   Departments:                    1
+2026-07-01 15:11:06 | INFO     |   Roles:                          1
+2026-07-01 15:11:06 | INFO     |   Teams:                          1
+2026-07-01 15:11:06 | INFO     |   Business units:                 1
+2026-07-01 15:11:06 | INFO     |   PCs:                            0
+2026-07-01 15:11:06 | INFO     |   Website domains:                0
+2026-07-01 15:11:06 | INFO     |   File extensions:                0
+2026-07-01 15:11:06 | INFO     |   Total event rows read:          32,704,166
+2026-07-01 15:11:06 | INFO     |   Skipped (unmapped event_type):  2,629,700
+2026-07-01 15:11:06 | INFO     |   Dropped (unknown user_id):      30,074,466
+2026-07-01 15:11:06 | INFO     |   Edges ('User', 'belongs_to', 'Department'): 1,000
+2026-07-01 15:11:06 | INFO     |   Edges ('User', 'has_role', 'Role'): 1,000
+2026-07-01 15:11:06 | INFO     |   Edges ('User', 'member_of', 'Team'): 1,000
+2026-07-01 15:11:06 | INFO     |   Edges ('User', 'part_of', 'BusinessUnit'): 1,000
+2026-07-01 15:11:06 | INFO     |   Edges ('User', 'works_with', 'User'): 0
+2026-07-01 15:11:06 | INFO     |   Edges ('User', 'accesses', 'PC'): 0
+2026-07-01 15:11:06 | INFO     |   Edges ('User', 'visits', 'WebsiteDomain'): 0
+2026-07-01 15:11:06 | INFO     |   Edges ('User', 'touches', 'FileExtension'): 0
+2026-07-01 15:11:06 | INFO     |   Validation passed:               False
+2026-07-01 15:11:06 | INFO     |   Total build time:                50.6s
+2026-07-01 15:11:06 | INFO     |   Graph saved to:                  graph\output\heterogeneous_graph.pt
+2026-07-01 15:11:06 | INFO     |   Artifacts saved to:              graph\output\preprocessing_artifacts.pkl
+2026-07-01 15:11:06 | INFO     | ==============================================================================
+2026-07-01 15:18:23 | INFO     | ==============================================================================
+2026-07-01 15:18:23 | INFO     | Starting temporal heterogeneous event graph build
+2026-07-01 15:18:23 | INFO     | ==============================================================================
+2026-07-01 15:18:23 | INFO     | Loading LDAP directory snapshot from data\raw\LDAP.csv
+2026-07-01 15:18:23 | INFO     | [DIAG] LDAP.csv user_id -> source dtype=str, raw samples=['CEL0561', 'CRD0624', 'JFC0557'], normalized samples=['CEL0561', 'CRD0624', 'JFC0557']
+2026-07-01 15:18:23 | INFO     | Loaded LDAP records for 16,743 identities
+2026-07-01 15:18:23 | INFO     | Loading fused user features from data\processed\fused_features.csv
+2026-07-01 15:18:23 | INFO     | [DIAG] fused_features.csv user_id -> source dtype=str, raw samples=['aae0190', 'aaf0535', 'aaf0791'], normalized samples=['AAE0190', 'AAF0535', 'AAF0791']
+2026-07-01 15:18:23 | WARNING  | Dropping 8 non-numeric feature column(s) that cannot be placed in a float tensor as-is: ['employee_name', 'email', 'role', 'functional_unit', 'department', 'team', 'supervisor', 'employee_name_psychometric']
+2026-07-01 15:18:23 | INFO     | Loaded 1,000 users with 47 raw feature dimensions each
+2026-07-01 15:18:23 | INFO     | Loading file sensitivity table from data\processed\file_sensitivity.csv
+2026-07-01 15:18:23 | INFO     | Loaded sensitivity scores for 6 file extensions
+2026-07-01 15:18:23 | INFO     | [MEMORY] after loading static tables: 403.8 MB RSS
+2026-07-01 15:18:23 | INFO     | Building structural edges from LDAP (each exists exactly once per user)
+2026-07-01 15:18:23 | INFO     | [EDGES] User-belongs_to->Department: 1,000 structural edges
+2026-07-01 15:18:23 | INFO     | [EDGES] User-has_role->Role: 1,000 structural edges
+2026-07-01 15:18:23 | INFO     | [EDGES] User-member_of->Team: 1,000 structural edges
+2026-07-01 15:18:23 | INFO     | [EDGES] User-part_of->BusinessUnit: 1,000 structural edges
+2026-07-01 15:18:23 | INFO     | [EDGES] User-works_with->User: 20,374 structural edges
+2026-07-01 15:18:23 | INFO     | Streaming events from data\processed\unified_events.csv in chunks of 500,000 rows
+2026-07-01 15:18:24 | INFO     | [DIAG] unique event_type values in first chunk: ['logon']
+2026-07-01 15:18:24 | INFO     | [DIAG] first chunk normalized user_id samples: ['NGF0157', 'LRR0148', 'LRR0148'] (compare against the fused_features/LDAP samples logged above)
+2026-07-01 15:18:56 | INFO     | ==============================================================================
+2026-07-01 15:18:56 | INFO     | Starting temporal heterogeneous event graph build
+2026-07-01 15:18:56 | INFO     | ==============================================================================
+2026-07-01 15:18:56 | INFO     | Loading LDAP directory snapshot from data\processed\ldap.csv
+2026-07-01 15:58:00 | INFO     | ==============================================================================
+2026-07-01 15:58:00 | INFO     | Starting temporal heterogeneous event graph build
+2026-07-01 15:58:00 | INFO     | ==============================================================================
+2026-07-01 15:58:00 | INFO     | Loading LDAP directory snapshot from data\processed\ldap.csv
+2026-07-01 16:00:03 | INFO     | ==============================================================================
+2026-07-01 16:00:03 | INFO     | Starting temporal heterogeneous event graph build
+2026-07-01 16:00:03 | INFO     | ==============================================================================
+2026-07-01 16:00:03 | INFO     | Loading LDAP directory snapshot from data\raw\LDAP.csv
+2026-07-01 16:00:03 | INFO     | [DIAG] LDAP.csv user_id -> source dtype=str, raw samples=['CEL0561', 'CRD0624', 'JFC0557'], normalized samples=['CEL0561', 'CRD0624', 'JFC0557']
+2026-07-01 16:00:04 | INFO     | Loaded LDAP records for 16,743 identities
+2026-07-01 16:00:04 | INFO     | Loading fused user features from data\processed\fused_features.csv
+2026-07-01 16:00:04 | INFO     | [DIAG] fused_features.csv user_id -> source dtype=str, raw samples=['aae0190', 'aaf0535', 'aaf0791'], normalized samples=['AAE0190', 'AAF0535', 'AAF0791']
+2026-07-01 16:00:04 | WARNING  | Dropping 8 non-numeric feature column(s) that cannot be placed in a float tensor as-is: ['employee_name', 'email', 'role', 'functional_unit', 'department', 'team', 'supervisor', 'employee_name_psychometric']
+2026-07-01 16:00:04 | INFO     | Loaded 1,000 users with 47 raw feature dimensions each
+2026-07-01 16:00:04 | INFO     | Loading file sensitivity table from data\processed\file_sensitivity.csv
+2026-07-01 16:00:04 | INFO     | Loaded sensitivity scores for 6 file extensions
+2026-07-01 16:00:04 | INFO     | [MEMORY] after loading static tables: 403.4 MB RSS
+2026-07-01 16:00:04 | INFO     | Building structural edges from LDAP (each exists exactly once per user)
+2026-07-01 16:00:04 | INFO     | [EDGES] User-belongs_to->Department: 1,000 structural edges
+2026-07-01 16:00:04 | INFO     | [EDGES] User-has_role->Role: 1,000 structural edges
+2026-07-01 16:00:04 | INFO     | [EDGES] User-member_of->Team: 1,000 structural edges
+2026-07-01 16:00:04 | INFO     | [EDGES] User-part_of->BusinessUnit: 1,000 structural edges
+2026-07-01 16:00:04 | INFO     | [EDGES] User-works_with->User: 20,374 structural edges
+2026-07-01 16:00:04 | INFO     | Streaming events from data\processed\unified_events.csv in chunks of 500,000 rows
+2026-07-01 16:00:05 | INFO     | [DIAG] unique event_type values in first chunk: ['logon']
+2026-07-01 16:00:05 | INFO     | [DIAG] first chunk normalized user_id samples: ['NGF0157', 'LRR0148', 'LRR0148'] (compare against the fused_features/LDAP samples logged above)
+2026-07-01 16:15:56 | INFO     | ==============================================================================
+2026-07-01 16:15:56 | INFO     | Starting temporal heterogeneous event graph build
+2026-07-01 16:15:56 | INFO     | ==============================================================================
+2026-07-01 16:15:56 | INFO     | Loading LDAP directory snapshot from data\processed\ldap.csv
+2026-07-01 16:31:19 | INFO     | ==============================================================================
+2026-07-01 16:31:19 | INFO     | Starting temporal heterogeneous event graph build
+2026-07-01 16:31:19 | INFO     | ==============================================================================
+2026-07-01 16:31:19 | INFO     | Loading LDAP directory snapshot from data\raw\LDAP.csv
+2026-07-01 16:31:19 | INFO     | [DIAG] LDAP.csv user_id -> source dtype=str, raw samples=['CEL0561', 'CRD0624', 'JFC0557'], normalized samples=['CEL0561', 'CRD0624', 'JFC0557']
+2026-07-01 16:31:19 | INFO     | Loaded LDAP records for 16,743 identities
+2026-07-01 16:31:19 | INFO     | Loading fused user features from data\processed\fused_features.csv
+2026-07-01 16:31:19 | INFO     | [DIAG] fused_features.csv user_id -> source dtype=str, raw samples=['aae0190', 'aaf0535', 'aaf0791'], normalized samples=['AAE0190', 'AAF0535', 'AAF0791']
+2026-07-01 16:31:19 | WARNING  | Dropping 8 non-numeric feature column(s) that cannot be placed in a float tensor as-is: ['employee_name', 'email', 'role', 'functional_unit', 'department', 'team', 'supervisor', 'employee_name_psychometric']
+2026-07-01 16:31:19 | INFO     | Loaded 1,000 users with 47 raw feature dimensions each
+2026-07-01 16:31:19 | INFO     | Loading file sensitivity table from data\processed\file_sensitivity.csv
+2026-07-01 16:31:20 | INFO     | Loaded sensitivity scores for 6 file extensions
+2026-07-01 16:31:20 | INFO     | [MEMORY] after loading static tables: 402.1 MB RSS
+2026-07-01 16:31:20 | INFO     | Building structural edges from LDAP (each exists exactly once per user)
+2026-07-01 16:31:20 | INFO     | [EDGES] User-belongs_to->Department: 1,000 structural edges
+2026-07-01 16:31:20 | INFO     | [EDGES] User-has_role->Role: 1,000 structural edges
+2026-07-01 16:31:20 | INFO     | [EDGES] User-member_of->Team: 1,000 structural edges
+2026-07-01 16:31:20 | INFO     | [EDGES] User-part_of->BusinessUnit: 1,000 structural edges
+2026-07-01 16:31:20 | INFO     | [EDGES] User-works_with->User: 20,374 structural edges
+2026-07-01 16:31:20 | INFO     | Streaming events from data\processed\unified_events.csv in chunks of 500,000 rows
+2026-07-01 16:31:21 | INFO     | [DIAG] unique event_type values in first chunk: ['logon']
+2026-07-01 16:31:21 | INFO     | [DIAG] first chunk normalized user_id samples: ['NGF0157', 'LRR0148', 'LRR0148'] (compare against the fused_features/LDAP samples logged above)
+2026-07-01 16:31:21 | INFO     | [STREAM] chunk=0 rows_so_far=500,000 rate=366,398 rows/sec
+2026-07-01 16:31:21 | INFO     | [MEMORY] after chunk 0: 468.0 MB RSS
+2026-07-01 16:31:29 | INFO     | [STREAM] chunk=5 rows_so_far=3,000,000 rate=333,314 rows/sec
+2026-07-01 16:31:29 | INFO     | [MEMORY] after chunk 5: 621.1 MB RSS
+2026-07-01 16:31:39 | INFO     | [STREAM] chunk=10 rows_so_far=5,500,000 rate=289,237 rows/sec
+2026-07-01 16:31:39 | INFO     | [MEMORY] after chunk 10: 787.2 MB RSS
+2026-07-01 16:31:51 | INFO     | [STREAM] chunk=15 rows_so_far=8,000,000 rate=260,075 rows/sec
+2026-07-01 16:31:51 | INFO     | [MEMORY] after chunk 15: 927.2 MB RSS
+2026-07-01 16:32:03 | INFO     | [STREAM] chunk=20 rows_so_far=10,500,000 rate=244,563 rows/sec
+2026-07-01 16:32:03 | INFO     | [MEMORY] after chunk 20: 1,060.8 MB RSS
+2026-07-01 16:32:15 | INFO     | [STREAM] chunk=25 rows_so_far=13,000,000 rate=237,025 rows/sec
+2026-07-01 16:32:15 | INFO     | [MEMORY] after chunk 25: 1,197.6 MB RSS
+2026-07-01 16:32:27 | INFO     | [STREAM] chunk=30 rows_so_far=15,500,000 rate=231,680 rows/sec
+2026-07-01 16:32:27 | INFO     | [MEMORY] after chunk 30: 1,330.9 MB RSS
+2026-07-01 16:32:39 | INFO     | [STREAM] chunk=35 rows_so_far=18,000,000 rate=228,102 rows/sec
+2026-07-01 16:32:39 | INFO     | [MEMORY] after chunk 35: 1,471.0 MB RSS
+2026-07-01 16:32:52 | INFO     | [STREAM] chunk=40 rows_so_far=20,500,000 rate=223,798 rows/sec
+2026-07-01 16:32:52 | INFO     | [MEMORY] after chunk 40: 1,607.5 MB RSS
+2026-07-01 16:33:04 | INFO     | [STREAM] chunk=45 rows_so_far=23,000,000 rate=221,526 rows/sec
+2026-07-01 16:33:04 | INFO     | [MEMORY] after chunk 45: 1,741.1 MB RSS
+2026-07-01 16:33:16 | INFO     | [STREAM] chunk=50 rows_so_far=25,500,000 rate=219,529 rows/sec
+2026-07-01 16:33:16 | INFO     | [MEMORY] after chunk 50: 1,838.7 MB RSS
+2026-07-01 16:33:29 | INFO     | [STREAM] chunk=55 rows_so_far=28,000,000 rate=217,859 rows/sec
+2026-07-01 16:33:29 | INFO     | [MEMORY] after chunk 55: 1,972.4 MB RSS
+2026-07-01 16:33:41 | INFO     | [STREAM] chunk=60 rows_so_far=30,500,000 rate=216,497 rows/sec
+2026-07-01 16:33:41 | INFO     | [MEMORY] after chunk 60: 2,086.8 MB RSS
+2026-07-01 16:33:52 | INFO     | [STREAM] chunk=65 rows_so_far=32,704,166 rate=215,711 rows/sec
+2026-07-01 16:33:52 | INFO     | [MEMORY] after chunk 65: 2,189.4 MB RSS
+2026-07-01 16:33:52 | INFO     | Finished streaming 32,704,166 rows in 151.9s
+2026-07-01 16:33:52 | WARNING  | 2,629,700 row(s) had an event_type outside ['logon', 'logoff', 'device', 'http', 'file'] and have no declared temporal edge type in this schema; they were not converted into edges (see module docstring, assumption #1).
+2026-07-01 16:57:18 | INFO     | ==============================================================================
+2026-07-01 16:57:18 | INFO     | Starting streaming, shard-based temporal event graph build
+2026-07-01 16:57:18 | INFO     | ==============================================================================
+2026-07-01 16:57:18 | INFO     | Loading LDAP directory snapshot from data\raw\LDAP.csv
+2026-07-01 16:57:19 | INFO     | [DIAG] LDAP.csv user_id -> source dtype=str, raw samples=['CEL0561', 'CRD0624', 'JFC0557'], normalized samples=['CEL0561', 'CRD0624', 'JFC0557']
+2026-07-01 16:57:19 | INFO     | Loaded LDAP records for 16,743 identities
+2026-07-01 16:57:19 | INFO     | Loading fused user features from data\processed\fused_features.csv
+2026-07-01 16:57:19 | INFO     | [DIAG] fused_features.csv user_id -> source dtype=str, raw samples=['aae0190', 'aaf0535', 'aaf0791'], normalized samples=['AAE0190', 'AAF0535', 'AAF0791']
+2026-07-01 16:57:19 | WARNING  | Dropping 8 non-numeric feature column(s) that cannot be placed in a float tensor as-is: ['employee_name', 'email', 'role', 'functional_unit', 'department', 'team', 'supervisor', 'employee_name_psychometric']
+2026-07-01 16:57:19 | INFO     | Loaded 1,000 users with 47 raw feature dimensions each
+2026-07-01 16:57:19 | INFO     | Loading file sensitivity table from data\processed\file_sensitivity.csv
+2026-07-01 16:57:19 | INFO     | Loaded sensitivity scores for 6 file extensions
+2026-07-01 16:57:19 | INFO     | [MEMORY] after loading static tables: 401.7 MB RSS
+2026-07-01 16:57:19 | INFO     | Building structural edges from LDAP (each exists exactly once per user)
+2026-07-01 16:57:20 | INFO     | [EDGES] User-belongs_to->Department: 1,000 structural edges
+2026-07-01 16:57:20 | INFO     | [EDGES] User-has_role->Role: 1,000 structural edges
+2026-07-01 16:57:20 | INFO     | [EDGES] User-member_of->Team: 1,000 structural edges
+2026-07-01 16:57:20 | INFO     | [EDGES] User-part_of->BusinessUnit: 1,000 structural edges
+2026-07-01 16:57:20 | INFO     | [EDGES] User-works_with->User: 20,374 structural edges
+2026-07-01 16:57:20 | INFO     | Streaming events from data\processed\unified_events.csv in chunks of 500,000 rows
+2026-07-01 16:57:20 | INFO     | Each chunk is converted to per-relation shards and written to disk immediately; no edge data is retained across chunk boundaries.
+2026-07-01 16:57:20 | INFO     | [DIAG] unique event_type values in first chunk: ['logon']
+2026-07-01 16:57:21 | INFO     | [STREAM] chunk=0 rows_so_far=500,000 rate=339,419 rows/sec shards_written=1
+2026-07-01 16:57:21 | INFO     | [MEMORY] after chunk 0: 445.1 MB RSS
+2026-07-01 16:57:31 | INFO     | [STREAM] chunk=5 rows_so_far=3,000,000 rate=270,711 rows/sec shards_written=2
+2026-07-01 16:57:31 | INFO     | [MEMORY] after chunk 5: 483.3 MB RSS
+2026-07-01 16:57:46 | INFO     | [STREAM] chunk=10 rows_so_far=5,500,000 rate=208,981 rows/sec shards_written=9
+2026-07-01 16:57:46 | INFO     | [MEMORY] after chunk 10: 641.5 MB RSS
+2026-07-01 16:58:00 | INFO     | [STREAM] chunk=15 rows_so_far=8,000,000 rate=198,032 rows/sec shards_written=14
+2026-07-01 16:58:00 | INFO     | [MEMORY] after chunk 15: 658.6 MB RSS
+2026-07-01 16:58:17 | INFO     | [STREAM] chunk=20 rows_so_far=10,500,000 rate=183,720 rows/sec shards_written=19
+2026-07-01 16:58:17 | INFO     | [MEMORY] after chunk 20: 562.9 MB RSS
+2026-07-01 16:58:29 | INFO     | [STREAM] chunk=25 rows_so_far=13,000,000 rate=187,789 rows/sec shards_written=24
+2026-07-01 16:58:29 | INFO     | [MEMORY] after chunk 25: 564.2 MB RSS
+2026-07-01 16:58:41 | INFO     | [STREAM] chunk=30 rows_so_far=15,500,000 rate=190,175 rows/sec shards_written=29
+2026-07-01 16:58:41 | INFO     | [MEMORY] after chunk 30: 564.3 MB RSS
+2026-07-01 16:58:53 | INFO     | [STREAM] chunk=35 rows_so_far=18,000,000 rate=192,983 rows/sec shards_written=34
+2026-07-01 16:58:53 | INFO     | [MEMORY] after chunk 35: 587.1 MB RSS
+2026-07-01 16:59:05 | INFO     | [STREAM] chunk=40 rows_so_far=20,500,000 rate=194,486 rows/sec shards_written=39
+2026-07-01 16:59:05 | INFO     | [MEMORY] after chunk 40: 587.1 MB RSS
+2026-07-01 16:59:17 | INFO     | [STREAM] chunk=45 rows_so_far=23,000,000 rate=195,785 rows/sec shards_written=44
+2026-07-01 16:59:17 | INFO     | [MEMORY] after chunk 45: 588.1 MB RSS
+2026-07-01 16:59:29 | INFO     | [STREAM] chunk=50 rows_so_far=25,500,000 rate=196,988 rows/sec shards_written=49
+2026-07-01 16:59:29 | INFO     | [MEMORY] after chunk 50: 588.1 MB RSS
+2026-07-01 16:59:41 | INFO     | [STREAM] chunk=55 rows_so_far=28,000,000 rate=197,980 rows/sec shards_written=54
+2026-07-01 16:59:41 | INFO     | [MEMORY] after chunk 55: 588.2 MB RSS
+2026-07-01 16:59:53 | INFO     | [STREAM] chunk=60 rows_so_far=30,500,000 rate=198,754 rows/sec shards_written=59
+2026-07-01 16:59:53 | INFO     | [MEMORY] after chunk 60: 591.2 MB RSS
+2026-07-01 17:00:04 | INFO     | [STREAM] chunk=65 rows_so_far=32,704,166 rate=199,303 rows/sec shards_written=64
+2026-07-01 17:00:04 | INFO     | [MEMORY] after chunk 65: 591.8 MB RSS
+2026-07-01 17:00:04 | INFO     | Finished streaming 32,704,166 rows in 164.4s
+2026-07-01 17:00:04 | WARNING  | 2,629,700 row(s) had an event_type outside ['logon', 'logoff', 'device', 'http', 'file'] and were not converted into edges (see module docstring, assumption #1).
+2026-07-01 17:00:04 | INFO     | [EDGES] User__accesses__PC: 1,259,878 temporal edges across 4 shard(s)
+2026-07-01 17:00:04 | INFO     | [EDGES] User__touches__FileExtension: 445,581 temporal edges across 2 shard(s)
+2026-07-01 17:00:04 | INFO     | [EDGES] User__visits__WebsiteDomain: 28,369,007 temporal edges across 58 shard(s)
+2026-07-01 17:00:04 | INFO     | [MEMORY] after streaming events (shards on disk, nothing accumulated): 590.2 MB RSS
+2026-07-01 17:00:04 | INFO     | Assembling node/structural skeleton graph (no event edges attached)
+2026-07-01 17:00:04 | INFO     | HeteroData(
+  User={
+    x=[1000, 47],
+    num_nodes=1000,
+  },
+  Department={
+    x=[23, 1],
+    num_nodes=23,
+  },
+  Role={
+    x=[42, 1],
+    num_nodes=42,
+  },
+  Team={
+    x=[39, 1],
+    num_nodes=39,
+  },
+  BusinessUnit={
+    x=[1, 1],
+    num_nodes=1,
+  },
+  PC={
+    x=[1003, 1],
+    num_nodes=1003,
+  },
+  WebsiteDomain={
+    x=[475, 1],
+    num_nodes=475,
+  },
+  FileExtension={
+    x=[6, 2],
+    num_nodes=6,
+  },
+  (User, belongs_to, Department)={ edge_index=[2, 1000] },
+  (User, has_role, Role)={ edge_index=[2, 1000] },
+  (User, member_of, Team)={ edge_index=[2, 1000] },
+  (User, part_of, BusinessUnit)={ edge_index=[2, 1000] },
+  (User, works_with, User)={ edge_index=[2, 20374] }
+)
+2026-07-01 17:00:04 | INFO     | Validating node/structural skeleton
+2026-07-01 17:00:04 | INFO     | [VALIDATION] Skeleton checks passed
+2026-07-01 17:00:04 | INFO     | Validating edge shards (streaming, one shard at a time)
+2026-07-01 17:00:07 | INFO     | [VALIDATION] All shard checks passed
+2026-07-01 17:00:07 | INFO     | Saving node/structural skeleton to graph\output\node_graph_skeleton.pt
+2026-07-01 17:00:07 | INFO     | Saving edge shard manifest (64 shards) to graph\output\edge_shard_manifest.json
+2026-07-01 17:00:07 | INFO     | Saving preprocessing artifacts to graph\output\preprocessing_artifacts.pkl
+2026-07-01 17:00:07 | INFO     | Save complete
+2026-07-01 17:00:07 | INFO     | ==============================================================================
+2026-07-01 17:00:07 | INFO     | BUILD SUMMARY
+2026-07-01 17:00:07 | INFO     |   Users:                          1,000
+2026-07-01 17:00:07 | INFO     |   Departments:                    23
+2026-07-01 17:00:07 | INFO     |   Roles:                          42
+2026-07-01 17:00:07 | INFO     |   Teams:                          39
+2026-07-01 17:00:07 | INFO     |   Business units:                 1
+2026-07-01 17:00:07 | INFO     |   PCs:                            1,003
+2026-07-01 17:00:07 | INFO     |   Website domains:                475
+2026-07-01 17:00:07 | INFO     |   File extensions:                6
+2026-07-01 17:00:07 | INFO     |   Total event rows read:          32,704,166
+2026-07-01 17:00:07 | INFO     |   Skipped (unmapped event_type):  2,629,700
+2026-07-01 17:00:07 | INFO     |   Dropped (unknown user_id):      0
+2026-07-01 17:00:08 | INFO     |   Invalid/unparseable timestamps: 0 (coerced to epoch 0)
+2026-07-01 17:00:08 | INFO     |   Total shards written:           64
+2026-07-01 17:00:08 | INFO     |   Edges User__accesses__PC: 1,259,878 across 4 shard(s)
+2026-07-01 17:00:08 | INFO     |   Edges User__touches__FileExtension: 445,581 across 2 shard(s)
+2026-07-01 17:00:08 | INFO     |   Edges User__visits__WebsiteDomain: 28,369,007 across 58 shard(s)
+2026-07-01 17:00:08 | INFO     |   Skeleton validation passed:      True
+2026-07-01 17:00:08 | INFO     |   Shard validation passed:         True
+2026-07-01 17:00:08 | INFO     |   Total build time:                169.1s
+2026-07-01 17:00:08 | INFO     |   Skeleton graph saved to:         graph\output\node_graph_skeleton.pt
+2026-07-01 17:00:08 | INFO     |   Shard manifest saved to:         graph\output\edge_shard_manifest.json
+2026-07-01 17:00:08 | INFO     |   Artifacts saved to:              graph\output\preprocessing_artifacts.pkl
+2026-07-01 17:00:08 | INFO     | ==============================================================================
