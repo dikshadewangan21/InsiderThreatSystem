@@ -617,7 +617,7 @@ class FocalLoss(nn.Module):
 
     def __init__(self, alpha: float = 0.25, gamma: float = 2.0) -> None:
         super().__init__()
-        self.alpha = alpha
+        self.alpha = min(max(float(alpha), 0.05), 0.95)
         self.gamma = gamma
         self._bce = nn.BCEWithLogitsLoss(reduction="none")
 
@@ -638,11 +638,7 @@ def build_loss_fn(config: TrainingConfig, pos_weight: Optional[torch.Tensor] = N
     if loss_name == "bce_logits":
         return nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     if loss_name == "focal":
-        alpha = config.focal_alpha
-        if pos_weight is not None:
-            # pos_weight = neg / pos => alpha = neg / (neg + pos)
-            alpha = float(pos_weight[0].item()) / (1.0 + float(pos_weight[0].item()))
-        return FocalLoss(alpha=alpha, gamma=config.focal_gamma)
+        return FocalLoss(alpha=config.focal_alpha, gamma=config.focal_gamma)
     raise ValueError(f"Unsupported loss '{config.loss}'.")
 
 
@@ -732,22 +728,68 @@ class EarlyStopping:
 # Metrics
 # ==========================================================================
 
-def find_best_threshold(targets: np.ndarray, probs: np.ndarray) -> float:
-    """Find the threshold that maximizes F1 score on validation set."""
+def _rate_capped_threshold(
+    probs: np.ndarray, max_pred_positive_rate: float, min_threshold: float
+) -> float:
+    probs = np.asarray(probs, dtype=np.float32).reshape(-1)
+    if probs.size == 0:
+        return 0.5
+    if float(probs.max() - probs.min()) < 1e-6:
+        return max(0.5, min_threshold)
+    quantile = 1.0 - min(max_pred_positive_rate, 1.0)
+    return float(max(min_threshold, np.quantile(probs, quantile)))
+
+
+def find_best_threshold(
+    targets: np.ndarray,
+    probs: np.ndarray,
+    min_threshold: float = 0.05,
+    max_pred_positive_rate: float = 0.20,
+    min_recall: float = 0.80,
+    min_positive_count: int = 3,
+) -> float:
+    """Find a constrained threshold without overfitting to one positive.
+
+    Plain F1 maximization on CERT r4.2 validation can select thresholds near
+    zero because the validation split has only one positive user. This search
+    prefers high recall, but rejects thresholds that classify almost every
+    validation node as positive.
+    """
     if probs.size == 0 or targets.size == 0:
         return 0.5
+    targets = np.asarray(targets, dtype=np.float32).reshape(-1)
+    probs = np.asarray(probs, dtype=np.float32).reshape(-1)
     if np.unique(targets.astype(int)).size < 2:
         return 0.5
-    best_thresh = 0.5
-    best_f1 = -1.0
-    # Search threshold space coarsely to prevent validation overfitting
-    thresholds = np.linspace(0.01, 0.99, 99)
+    n_pos = int((targets == 1).sum())
+    if n_pos < min_positive_count:
+        threshold = _rate_capped_threshold(probs, max_pred_positive_rate, min_threshold)
+        LOGGER.warning(
+            "Validation has only %d positive sample(s); using rate-capped "
+            "threshold %.4f instead of unconstrained F1 tuning.",
+            n_pos, threshold,
+        )
+        return threshold
+
+    unique_probs = np.unique(probs[np.isfinite(probs)])
+    thresholds = np.unique(np.concatenate([
+        np.linspace(min_threshold, 0.99, 95, dtype=np.float32),
+        unique_probs,
+    ]))
+    thresholds = thresholds[(thresholds >= min_threshold) & (thresholds <= 0.99)]
+    best_thresh = _rate_capped_threshold(probs, max_pred_positive_rate, min_threshold)
+    best_score = (-1.0, -1.0, -1.0)
     for thresh in thresholds:
         preds = (probs >= thresh).astype(int)
-        f1 = _binary_counts_and_scores(targets, preds)["f1"]
-        if f1 > best_f1:
-            best_f1 = f1
-            best_thresh = thresh
+        pred_rate = float(preds.mean())
+        if pred_rate > max_pred_positive_rate:
+            continue
+        scores = _binary_counts_and_scores(targets, preds)
+        recall_ok = 1.0 if scores["recall"] >= min_recall else 0.0
+        score = (recall_ok, scores["f1"], scores["precision"])
+        if score > best_score:
+            best_score = score
+            best_thresh = float(thresh)
     return float(best_thresh)
 
 
@@ -813,7 +855,10 @@ def _average_precision_np(targets: np.ndarray, probs: np.ndarray) -> float:
 
 
 def compute_classification_metrics(
-    targets: np.ndarray, probs: np.ndarray, threshold: float = 0.5
+    targets: np.ndarray,
+    probs: np.ndarray,
+    threshold: float = 0.5,
+    logits: Optional[np.ndarray] = None,
 ) -> Dict[str, float]:
     """Compute accuracy/precision/recall/F1/ROC-AUC/PR-AUC, confusion matrix,
     and probability bounds, handling single-class cases gracefully.
@@ -837,9 +882,28 @@ def compute_classification_metrics(
         "prob_min": float(probs.min()) if probs.size > 0 else 0.0,
         "prob_max": float(probs.max()) if probs.size > 0 else 0.0,
         "prob_mean": float(probs.mean()) if probs.size > 0 else 0.0,
+        "prob_std": float(probs.std()) if probs.size > 0 else 0.0,
+        "prob_saturated_low": float((probs <= 1e-4).mean()) if probs.size > 0 else 0.0,
+        "prob_saturated_high": float((probs >= 1.0 - 1e-4).mean()) if probs.size > 0 else 0.0,
         "pred_neg": float((preds == 0).sum()),
         "pred_pos": float((preds == 1).sum()),
     })
+    if logits is not None:
+        logits = np.asarray(logits, dtype=np.float32).reshape(-1)
+        finite_logits = logits[np.isfinite(logits)]
+        if finite_logits.size > 0:
+            metrics.update({
+                "logit_min": float(finite_logits.min()),
+                "logit_max": float(finite_logits.max()),
+                "logit_mean": float(finite_logits.mean()),
+                "logit_std": float(finite_logits.std()),
+                "logit_saturated_abs_gt_10": float((np.abs(finite_logits) > 10.0).mean()),
+            })
+    if metrics["pred_pos"] == 0 or metrics["pred_neg"] == 0:
+        LOGGER.warning(
+            "Prediction collapse at threshold %.4f: pred_neg=%d pred_pos=%d prob_std=%.6e.",
+            threshold, int(metrics["pred_neg"]), int(metrics["pred_pos"]), metrics["prob_std"],
+        )
 
     if len(np.unique(targets)) > 1:
         metrics["roc_auc"] = float(_roc_auc_np(targets, probs))
@@ -1017,12 +1081,19 @@ class InsiderThreatTrainer:
         num_neg = (train_labels == 0).sum().item()
         num_pos = (train_labels == 1).sum().item()
         if num_pos > 0:
-            pos_weight_val = num_neg / num_pos
+            raw_pos_weight_val = num_neg / num_pos
+            pos_weight_val = min(float(raw_pos_weight_val), float(config.max_pos_weight))
             self.pos_weight = torch.tensor([pos_weight_val], device=self.device)
-            LOGGER.info("Stratified train labels: normal=%d, threat=%d. Computed pos_weight=%.4f", num_neg, num_pos, pos_weight_val)
-            self.class_ratio = float(pos_weight_val)
+            self.raw_pos_weight = float(raw_pos_weight_val)
+            LOGGER.info(
+                "Stratified train labels: normal=%d, threat=%d. Raw pos_weight=%.4f, "
+                "capped pos_weight=%.4f.",
+                num_neg, num_pos, raw_pos_weight_val, pos_weight_val,
+            )
+            self.class_ratio = float(raw_pos_weight_val)
         else:
             self.pos_weight = None
+            self.raw_pos_weight = float("inf")
             self.class_ratio = float("inf")
             LOGGER.warning("No positive samples in the train split!")
 
@@ -1044,13 +1115,25 @@ class InsiderThreatTrainer:
 
         self.optimizer = build_optimizer(config, iter(all_params))
         self.scheduler = build_scheduler(config, self.optimizer)
-        if config.loss.lower() == "bce_logits" and self.class_ratio >= 50.0:
+        if config.loss.lower() == "focal":
             LOGGER.info(
-                "Extreme class imbalance detected (%.2f:1). Switching loss from weighted BCE to focal loss.",
-                self.class_ratio,
+                "Using focal loss with alpha=%.4f gamma=%.4f. Pos_weight is not "
+                "converted into focal alpha to avoid suppressing negative samples.",
+                config.focal_alpha, config.focal_gamma,
             )
-            config.loss = "focal"
         self.loss_fn = build_loss_fn(config, pos_weight=self.pos_weight).to(self.device)
+        self.probability_logit_shift = 0.0
+        if (
+            config.calibrate_weighted_logits
+            and config.loss.lower() == "bce_logits"
+            and self.pos_weight is not None
+            and float(self.pos_weight.item()) > 1.0
+        ):
+            self.probability_logit_shift = float(np.log(float(self.pos_weight.item())))
+            LOGGER.info(
+                "Calibrating weighted-BCE probabilities with logit shift %.6f.",
+                self.probability_logit_shift,
+            )
 
         self.use_amp = self.device.type == "cuda" and GradScaler is not None
         self.scaler = GradScaler(enabled=self.use_amp) if GradScaler is not None else None
@@ -1068,6 +1151,12 @@ class InsiderThreatTrainer:
         self.start_epoch = 0
         self.best_f1 = float("-inf")
         self.best_threshold = 0.5
+
+    def _logits_to_probabilities(self, logits: torch.Tensor) -> torch.Tensor:
+        calibrated_logits = logits
+        if self.probability_logit_shift:
+            calibrated_logits = calibrated_logits - self.probability_logit_shift
+        return torch.sigmoid(calibrated_logits).clamp(1e-6, 1.0 - 1e-6)
 
     # -- construction helpers ---------------------------------------------
 
@@ -1349,14 +1438,18 @@ class InsiderThreatTrainer:
         num_batches = 0
         all_targets: List[np.ndarray] = []
         all_probs: List[np.ndarray] = []
+        all_logits: List[np.ndarray] = []
         total_grad_norm = 0.0
+        total_mlp_grad_norm = 0.0
         grad_steps = 0
         self._epoch_embedding_variances: List[float] = []
         self._epoch_memory_variances: List[float] = []
         self._epoch_attention_entropies: List[float] = []
         self._epoch_logit_variances: List[float] = []
 
-        node_max_probs = torch.full((self.num_nodes,), -1.0, device=self.device)
+        node_prob_sum = torch.zeros((self.num_nodes,), device=self.device)
+        node_logit_sum = torch.zeros((self.num_nodes,), device=self.device)
+        node_prob_count = torch.zeros((self.num_nodes,), device=self.device)
         node_targets = torch.full((self.num_nodes,), -1.0, device=self.device)
 
         shard_iterator = stream_edge_shards(self.config.edge_shard_dir, self.device)
@@ -1402,13 +1495,20 @@ class InsiderThreatTrainer:
                         
                         # Calculate and verify gradient norm before clipping
                         grad_norm = 0.0
+                        mlp_grad_norm = 0.0
                         for p in params_to_clip:
                             if p.grad is not None:
                                 grad_norm += p.grad.data.norm(2).item() ** 2
+                        for p in self.mlp.parameters():
+                            if p.grad is not None:
+                                mlp_grad_norm += p.grad.data.norm(2).item() ** 2
                         grad_norm = grad_norm ** 0.5
+                        mlp_grad_norm = mlp_grad_norm ** 0.5
                         total_grad_norm += grad_norm
+                        total_mlp_grad_norm += mlp_grad_norm
                         grad_steps += 1
                         assert grad_norm > 1e-8, f"Gradients collapsed to zero unexpectedly! grad_norm={grad_norm:.6e}"
+                        assert mlp_grad_norm > 1e-10, f"MLP gradients collapsed to zero unexpectedly! mlp_grad_norm={mlp_grad_norm:.6e}"
 
                         nn.utils.clip_grad_norm_(
                             params_to_clip,
@@ -1421,13 +1521,20 @@ class InsiderThreatTrainer:
 
                         # Calculate and verify gradient norm before clipping
                         grad_norm = 0.0
+                        mlp_grad_norm = 0.0
                         for p in params_to_clip:
                             if p.grad is not None:
                                 grad_norm += p.grad.data.norm(2).item() ** 2
+                        for p in self.mlp.parameters():
+                            if p.grad is not None:
+                                mlp_grad_norm += p.grad.data.norm(2).item() ** 2
                         grad_norm = grad_norm ** 0.5
+                        mlp_grad_norm = mlp_grad_norm ** 0.5
                         total_grad_norm += grad_norm
+                        total_mlp_grad_norm += mlp_grad_norm
                         grad_steps += 1
                         assert grad_norm > 1e-8, f"Gradients collapsed to zero unexpectedly! grad_norm={grad_norm:.6e}"
+                        assert mlp_grad_norm > 1e-10, f"MLP gradients collapsed to zero unexpectedly! mlp_grad_norm={mlp_grad_norm:.6e}"
 
                         nn.utils.clip_grad_norm_(
                             params_to_clip,
@@ -1440,12 +1547,16 @@ class InsiderThreatTrainer:
             
             # Extract active indices & update node-level predictions
             valid_indices = valid_mask.nonzero(as_tuple=True)[0]
-            probs = torch.sigmoid(full_logits[valid_indices].detach()) if _uses_logits(self.config) else full_logits[valid_indices].detach()
+            logits_for_metrics = batch_logits.detach()
+            probs = self._logits_to_probabilities(logits_for_metrics) if _uses_logits(self.config) else logits_for_metrics
             
-            node_max_probs[valid_indices] = torch.maximum(node_max_probs[valid_indices], probs)
+            node_prob_sum[valid_indices] += probs
+            node_logit_sum[valid_indices] += logits_for_metrics
+            node_prob_count[valid_indices] += 1.0
             node_targets[valid_indices] = label_vector[valid_indices]
 
             all_probs.append(probs.cpu().numpy())
+            all_logits.append(logits_for_metrics.cpu().numpy())
             all_targets.append(batch_targets.detach().cpu().numpy())
 
             if shard_index % self.config.log_every_n_shards == 0:
@@ -1461,25 +1572,29 @@ class InsiderThreatTrainer:
         mean_loss = total_loss / num_batches
         targets_arr = np.concatenate(all_targets)
         probs_arr = np.concatenate(all_probs)
-        metrics = compute_classification_metrics(targets_arr, probs_arr, threshold=self.best_threshold)
+        logits_arr = np.concatenate(all_logits)
+        metrics = compute_classification_metrics(
+            targets_arr, probs_arr, threshold=self.best_threshold, logits=logits_arr
+        )
         metrics["grad_norm_mean"] = float(total_grad_norm / max(grad_steps, 1)) if train else 0.0
+        metrics["mlp_grad_norm_mean"] = float(total_mlp_grad_norm / max(grad_steps, 1)) if train else 0.0
         metrics["embedding_var_mean"] = float(np.mean(self._epoch_embedding_variances)) if self._epoch_embedding_variances else 0.0
         metrics["memory_var_mean"] = float(np.mean(self._epoch_memory_variances)) if self._epoch_memory_variances else 0.0
         metrics["attention_entropy_mean"] = float(np.mean(self._epoch_attention_entropies)) if self._epoch_attention_entropies else 0.0
         metrics["logit_var_mean"] = float(np.mean(self._epoch_logit_variances)) if self._epoch_logit_variances else 0.0
         LOGGER.info(
-            "%s model health | grad_norm=%.6f embedding_var=%.6e memory_var=%.6e "
+            "%s model health | grad_norm=%.6f mlp_grad_norm=%.6f embedding_var=%.6e memory_var=%.6e "
             "attention_entropy=%.6f logit_var=%.6e",
             "train" if train else "eval",
-            metrics["grad_norm_mean"], metrics["embedding_var_mean"],
+            metrics["grad_norm_mean"], metrics["mlp_grad_norm_mean"], metrics["embedding_var_mean"],
             metrics["memory_var_mean"], metrics["attention_entropy_mean"],
             metrics["logit_var_mean"],
         )
         
         # Gather node-level metrics
-        eval_mask = node_targets != -1
+        eval_mask = (node_targets != -1) & (node_prob_count > 0)
         node_targets_np = node_targets[eval_mask].cpu().numpy()
-        node_probs_np = node_max_probs[eval_mask].cpu().numpy()
+        node_probs_np = (node_prob_sum[eval_mask] / node_prob_count[eval_mask]).cpu().numpy()
 
         return mean_loss, metrics, (node_targets_np, node_probs_np)
 
@@ -1498,19 +1613,38 @@ class InsiderThreatTrainer:
         for epoch in range(self.start_epoch, self.config.epochs):
             epoch_start = time.time()
 
-            param_norm_before = self._parameter_l2_norm()
+            params_before = self._parameter_vector()
             train_loss, train_metrics, _ = self._run_epoch(self.train_ids, train=True)
-            param_norm_after = self._parameter_l2_norm()
-            param_delta = abs(param_norm_after - param_norm_before)
+            params_after = self._parameter_vector()
+            param_delta = self._parameter_l2_delta(params_before, params_after)
             val_loss, val_metrics, (val_targets, val_probs) = self._run_epoch(self.val_ids, train=False)
 
             # Optimize classification threshold on validation set
-            self.best_threshold = find_best_threshold(val_targets, val_probs)
+            self.best_threshold = find_best_threshold(
+                val_targets,
+                val_probs,
+                min_threshold=self.config.threshold_min,
+                max_pred_positive_rate=self.config.threshold_max_pred_positive_rate,
+                min_recall=self.config.threshold_min_recall,
+                min_positive_count=self.config.threshold_min_validation_positives,
+            )
             LOGGER.info("Optimized classification threshold for epoch %d: %.4f", epoch + 1, self.best_threshold)
 
             # Compute node-level validation metrics using the optimized threshold
             node_val_metrics = compute_classification_metrics(val_targets, val_probs, threshold=self.best_threshold)
             LOGGER.info("Validation set Node-Level metrics: %s", node_val_metrics)
+            classifier_collapsed = self._classifier_is_collapsed(node_val_metrics)
+            if classifier_collapsed:
+                LOGGER.warning(
+                    "Classifier collapse detected on validation: pred_neg=%d pred_pos=%d "
+                    "prob_std=%.6e saturated_high=%.4f saturated_low=%.4f. This epoch "
+                    "will not be eligible for best-checkpoint selection.",
+                    int(node_val_metrics.get("pred_neg", 0.0)),
+                    int(node_val_metrics.get("pred_pos", 0.0)),
+                    node_val_metrics.get("prob_std", 0.0),
+                    node_val_metrics.get("prob_saturated_high", 0.0),
+                    node_val_metrics.get("prob_saturated_low", 0.0),
+                )
 
             if isinstance(self.scheduler, optim.lr_scheduler.ReduceLROnPlateau):
                 self.scheduler.step(node_val_metrics["f1"])
@@ -1541,7 +1675,8 @@ class InsiderThreatTrainer:
             self._log_tensorboard(epoch, train_loss, val_loss, node_val_metrics, current_lr, gpu_mem)
             self._log_csv(epoch, train_loss, val_loss, train_metrics, node_val_metrics, current_lr, param_delta)
 
-            is_best = self.early_stopping.step(node_val_metrics["f1"])
+            selection_f1 = node_val_metrics["f1"] if not classifier_collapsed else float("-inf")
+            is_best = self.early_stopping.step(selection_f1)
             if is_best:
                 self.best_f1 = node_val_metrics["f1"]
 
@@ -1595,17 +1730,70 @@ class InsiderThreatTrainer:
                 total += float(param.detach().float().norm(2).item() ** 2)
         return total ** 0.5
 
+    def _parameter_vector(self) -> torch.Tensor:
+        vectors: List[torch.Tensor] = []
+        for module in (self.tgn, self.gat, self.mlp, self.edge_weighter):
+            if module is None:
+                continue
+            for param in module.parameters():
+                if param.requires_grad:
+                    vectors.append(param.detach().float().reshape(-1).cpu())
+        if not vectors:
+            return torch.empty(0)
+        return torch.cat(vectors)
+
+    @staticmethod
+    def _parameter_l2_delta(before: torch.Tensor, after: torch.Tensor) -> float:
+        if before.numel() != after.numel():
+            raise ProductionArtifactError(
+                "Parameter vector size changed during training; cannot verify optimizer update."
+            )
+        if before.numel() == 0:
+            return 0.0
+        return float((after - before).norm(2).item())
+
+    @staticmethod
+    def _classifier_is_collapsed(metrics: Dict[str, float]) -> bool:
+        pred_neg = int(metrics.get("pred_neg", 0.0))
+        pred_pos = int(metrics.get("pred_pos", 0.0))
+        prob_std = float(metrics.get("prob_std", 0.0))
+        saturated_high = float(metrics.get("prob_saturated_high", 0.0))
+        saturated_low = float(metrics.get("prob_saturated_low", 0.0))
+        return (
+            pred_neg == 0
+            or pred_pos == 0
+            or prob_std <= 1e-6
+            or saturated_high >= 0.95
+            or saturated_low >= 0.95
+        )
+
     def _init_csv_log(self) -> None:
+        header = [
+            "epoch", "train_loss", "val_loss", "val_accuracy", "val_precision",
+            "val_recall", "val_f1", "val_roc_auc", "val_pr_auc",
+            "prob_min", "prob_max", "prob_mean", "pred_neg", "pred_pos",
+            "prob_std", "prob_saturated_low", "prob_saturated_high",
+            "logit_min", "logit_max", "logit_mean", "logit_std",
+            "logit_saturated_abs_gt_10", "grad_norm_mean",
+            "mlp_grad_norm_mean", "param_delta", "learning_rate",
+        ]
         if os.path.exists(self.csv_log_path):
-            return
+            with open(self.csv_log_path, "r", newline="", encoding="utf-8") as handle:
+                reader = csv.reader(handle)
+                existing_header = next(reader, [])
+                has_rows = next(reader, None) is not None
+            if existing_header == header:
+                return
+            if has_rows:
+                backup_path = f"{self.csv_log_path}.bak_{int(time.time())}"
+                os.replace(self.csv_log_path, backup_path)
+                LOGGER.warning(
+                    "Existing metrics CSV header is incompatible; moved old log to %s.",
+                    backup_path,
+                )
         with open(self.csv_log_path, "w", newline="", encoding="utf-8") as handle:
             writer = csv.writer(handle)
-            writer.writerow([
-                "epoch", "train_loss", "val_loss", "val_accuracy", "val_precision",
-                "val_recall", "val_f1", "val_roc_auc", "val_pr_auc",
-                "prob_min", "prob_max", "prob_mean", "pred_neg", "pred_pos",
-                "grad_norm_mean", "param_delta", "learning_rate",
-            ])
+            writer.writerow(header)
 
     def _log_csv(
         self,
@@ -1634,7 +1822,16 @@ class InsiderThreatTrainer:
                 val_metrics.get("prob_mean", 0.0),
                 val_metrics.get("pred_neg", 0.0),
                 val_metrics.get("pred_pos", 0.0),
+                val_metrics.get("prob_std", 0.0),
+                val_metrics.get("prob_saturated_low", 0.0),
+                val_metrics.get("prob_saturated_high", 0.0),
+                val_metrics.get("logit_min", 0.0),
+                val_metrics.get("logit_max", 0.0),
+                val_metrics.get("logit_mean", 0.0),
+                val_metrics.get("logit_std", 0.0),
+                val_metrics.get("logit_saturated_abs_gt_10", 0.0),
                 train_metrics.get("grad_norm_mean", 0.0),
+                train_metrics.get("mlp_grad_norm_mean", 0.0),
                 param_delta,
                 lr,
             ])

@@ -24,3 +24,7 @@ graph/output/
 
 # Logs
 *.log
+
+# Generated alerts
+alerts/alerts.csv
+alerts/alerts.json

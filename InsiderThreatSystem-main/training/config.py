@@ -42,6 +42,19 @@ class TrainingConfig:
         loss: One of {"bce", "bce_logits", "focal"}.
         focal_alpha: Alpha term used only when ``loss == "focal"``.
         focal_gamma: Gamma term used only when ``loss == "focal"``.
+        max_pos_weight: Upper bound for positive-class weighting. CERT r4.2
+            has only two positive users, so the raw neg/pos ratio can force
+            every prediction positive if used directly.
+        calibrate_weighted_logits: If true, subtract log(pos_weight) from
+            logits before converting weighted-BCE outputs to probabilities.
+        threshold_min: Lower bound for selected classification thresholds.
+        threshold_max_pred_positive_rate: Maximum validation positive
+            prediction rate allowed during threshold search.
+        threshold_min_recall: Preferred minimum recall during constrained
+            threshold search.
+        threshold_min_validation_positives: Below this many validation
+            positives, F1 threshold tuning is considered statistically
+            unstable and falls back to rate-constrained thresholding.
         patience: Number of epochs with no F1 improvement before early
             stopping triggers.
         min_delta: Minimum F1 improvement to reset the early-stopping
@@ -82,6 +95,12 @@ class TrainingConfig:
     loss: str = "bce_logits"
     focal_alpha: float = 0.25
     focal_gamma: float = 2.0
+    max_pos_weight: float = 20.0
+    calibrate_weighted_logits: bool = True
+    threshold_min: float = 0.05
+    threshold_max_pred_positive_rate: float = 0.20
+    threshold_min_recall: float = 0.80
+    threshold_min_validation_positives: int = 3
 
     # --- Regularization / stability --------------------------------------
     patience: int = 10
@@ -166,6 +185,16 @@ class TrainingConfig:
             raise ValueError("batch_size must be a positive integer.")
         if self.patience <= 0:
             raise ValueError("patience must be a positive integer.")
+        if self.max_pos_weight < 1.0:
+            raise ValueError("max_pos_weight must be >= 1.0.")
+        if not 0.0 < self.threshold_min < 1.0:
+            raise ValueError("threshold_min must be in (0, 1).")
+        if not 0.0 < self.threshold_max_pred_positive_rate <= 1.0:
+            raise ValueError("threshold_max_pred_positive_rate must be in (0, 1].")
+        if not 0.0 <= self.threshold_min_recall <= 1.0:
+            raise ValueError("threshold_min_recall must be in [0, 1].")
+        if self.threshold_min_validation_positives < 1:
+            raise ValueError("threshold_min_validation_positives must be >= 1.")
 
     def to_dict(self) -> dict:
         """Return a plain-dict representation for logging/serialization."""
