@@ -20,7 +20,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
 from training.config import TrainingConfig  # noqa: E402
-from training.train import (  # noqa: E402
+from train import (  # noqa: E402
     InsiderThreatTrainer,
     apply_edge_weighting,
     stream_edge_shards,

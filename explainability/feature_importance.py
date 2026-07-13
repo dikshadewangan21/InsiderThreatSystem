@@ -11,7 +11,7 @@ import numpy as np
 from typing import Any, Dict, List, Tuple
 from alerts.risk_engine import RiskEngine, EVENT_TYPE_TO_RELATION, TEMPORAL_RELATION_NAME
 from graph.edge_features import sinusoidal_encoding, _FI, FEATURE_NAMES, _LOG_DENOM
-from training.train import apply_edge_weighting
+from train import apply_edge_weighting
 
 logger = logging.getLogger("insider_threat.explainability.feature_importance")
 

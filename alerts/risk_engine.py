@@ -33,7 +33,7 @@ from models.tgn_model import TGN
 from models.gat_model import GAT, GATConfig
 from models.mlp_classifier import MLPClassifier, MLPClassifierConfig
 from graph.edge_weighting import DynamicEdgeWeighting
-from training.train import apply_edge_weighting
+from train import apply_edge_weighting
 
 logger = logging.getLogger("insider_threat.alerts.risk_engine")
 
