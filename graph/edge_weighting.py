@@ -973,3 +973,35 @@ def _run_integration_self_test() -> int:
 
 if __name__ == "__main__":
     sys.exit(_run_integration_self_test())
+
+# ============================================================================
+# Shard-compatible wrapper for apply_edge_weights
+# ============================================================================
+
+def weight(shard: dict) -> dict:
+    """
+    Apply dynamic edge weighting to a shard.
+    
+    This is a convenience wrapper that:
+    1. Extracts edge_attr from the shard
+    2. Calls DynamicEdgeWeighting to compute weights
+    3. Returns the shard with edge_weight added
+    
+    Note: This assumes the shard has 'features' field (40 scalar features).
+    If your edge features are in a different field, update accordingly.
+    """
+    if 'features' not in shard:
+        # If no features field, skip weighting
+        return shard
+    
+    # Compute weights using the shard's features
+    edge_attr = shard['features']  # [E, 40]
+    
+    # Use DynamicEdgeWeighting with 40 input features
+    weighter = DynamicEdgeWeighting(in_features=40)
+    edge_weight = weighter(edge_attr)
+    
+    # Add edge_weight to shard and return
+    shard = dict(shard)
+    shard['edge_weight'] = edge_weight
+    return shard

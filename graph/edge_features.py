@@ -934,3 +934,24 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# ============================================================================
+# Shard loader for training
+# ============================================================================
+
+def load_edge_feature_shard(path: str) -> dict:
+    """Load a feature shard from disk for training.
+    
+    Returns a dict with:
+        - edge_index: [2, E] tensor of source/destination node indices
+        - edge_time: [E] tensor of timestamps
+        - features: [E, 40] scalar features
+        - temporal_encoding: [E, 16] temporal encoding
+        - relation: str
+        - src_node_type: str
+        - dst_node_type: str
+        - shard_index: int
+        - num_edges: int
+    """
+    import torch
+    return torch.load(path, weights_only=False)

@@ -397,3 +397,627 @@
 2026-07-01 17:00:08 | INFO     |   Shard manifest saved to:         graph\output\edge_shard_manifest.json
 2026-07-01 17:00:08 | INFO     |   Artifacts saved to:              graph\output\preprocessing_artifacts.pkl
 2026-07-01 17:00:08 | INFO     | ==============================================================================
+2026-07-03 12:13:43 | INFO     | ==============================================================================
+2026-07-03 12:13:43 | INFO     | Starting streaming, shard-based temporal event graph build
+2026-07-03 12:13:43 | INFO     | ==============================================================================
+2026-07-03 12:13:43 | INFO     | Loading LDAP directory snapshot from data\raw\LDAP.csv
+2026-07-03 15:29:36 | INFO     | ==============================================================================
+2026-07-03 15:29:36 | INFO     | Starting streaming, shard-based temporal event graph build
+2026-07-03 15:29:36 | INFO     | ==============================================================================
+2026-07-03 15:29:36 | INFO     | Loading LDAP directory snapshot from data\raw\LDAP.csv
+2026-07-03 15:29:36 | INFO     | [DIAG] LDAP.csv user_id -> source dtype=str, raw samples=['CEL0561', 'CRD0624', 'JFC0557'], normalized samples=['CEL0561', 'CRD0624', 'JFC0557']
+2026-07-03 15:29:36 | INFO     | Loaded LDAP records for 16,743 identities
+2026-07-03 15:29:36 | INFO     | Loading fused user features from data\processed\fused_features.csv
+2026-07-03 15:29:36 | INFO     | [DIAG] fused_features.csv user_id -> source dtype=str, raw samples=['aae0190', 'aaf0535', 'aaf0791'], normalized samples=['AAE0190', 'AAF0535', 'AAF0791']
+2026-07-03 15:29:36 | WARNING  | Dropping 8 non-numeric feature column(s) that cannot be placed in a float tensor as-is: ['employee_name', 'email', 'role', 'functional_unit', 'department', 'team', 'supervisor', 'employee_name_psychometric']
+2026-07-03 15:29:36 | INFO     | Loaded 1,000 users with 47 raw feature dimensions each
+2026-07-03 15:29:36 | INFO     | Loading file sensitivity table from data\processed\file_sensitivity.csv
+2026-07-03 15:29:37 | INFO     | Loaded sensitivity scores for 6 file extensions
+2026-07-03 15:29:37 | INFO     | [MEMORY] after loading static tables: 405.9 MB RSS
+2026-07-03 15:29:37 | INFO     | Building structural edges from LDAP (each exists exactly once per user)
+2026-07-03 15:29:37 | INFO     | [EDGES] User-belongs_to->Department: 1,000 structural edges
+2026-07-03 15:29:37 | INFO     | [EDGES] User-has_role->Role: 1,000 structural edges
+2026-07-03 15:29:37 | INFO     | [EDGES] User-member_of->Team: 1,000 structural edges
+2026-07-03 15:29:37 | INFO     | [EDGES] User-part_of->BusinessUnit: 1,000 structural edges
+2026-07-03 15:29:37 | INFO     | [EDGES] User-works_with->User: 20,374 structural edges
+2026-07-03 15:29:37 | INFO     | Streaming events from data\processed\unified_events.csv in chunks of 500,000 rows
+2026-07-03 15:29:37 | INFO     | Each chunk is converted to per-relation shards and written to disk immediately; no edge data is retained across chunk boundaries.
+2026-07-03 15:29:37 | INFO     | [DIAG] unique event_type values in first chunk: ['logon']
+2026-07-03 15:29:37 | INFO     | [STREAM] chunk=0 rows_so_far=500,000 rate=696,501 rows/sec shards_written=1
+2026-07-03 15:29:37 | INFO     | [MEMORY] after chunk 0: 452.1 MB RSS
+2026-07-03 15:29:41 | INFO     | [STREAM] chunk=5 rows_so_far=3,000,000 rate=725,834 rows/sec shards_written=2
+2026-07-03 15:29:41 | INFO     | [MEMORY] after chunk 5: 572.7 MB RSS
+2026-07-03 15:29:46 | INFO     | [STREAM] chunk=10 rows_so_far=5,500,000 rate=598,349 rows/sec shards_written=9
+2026-07-03 15:29:46 | INFO     | [MEMORY] after chunk 10: 657.3 MB RSS
+2026-07-03 15:29:52 | INFO     | [STREAM] chunk=15 rows_so_far=8,000,000 rate=525,700 rows/sec shards_written=14
+2026-07-03 15:29:52 | INFO     | [MEMORY] after chunk 15: 619.2 MB RSS
+2026-07-03 15:29:58 | INFO     | [STREAM] chunk=20 rows_so_far=10,500,000 rate=494,643 rows/sec shards_written=19
+2026-07-03 15:29:58 | INFO     | [MEMORY] after chunk 20: 633.5 MB RSS
+2026-07-03 15:30:04 | INFO     | [STREAM] chunk=25 rows_so_far=13,000,000 rate=476,660 rows/sec shards_written=24
+2026-07-03 15:30:04 | INFO     | [MEMORY] after chunk 25: 631.9 MB RSS
+2026-07-03 15:30:10 | INFO     | [STREAM] chunk=30 rows_so_far=15,500,000 rate=463,855 rows/sec shards_written=29
+2026-07-03 15:30:10 | INFO     | [MEMORY] after chunk 30: 629.9 MB RSS
+2026-07-03 15:30:16 | INFO     | [STREAM] chunk=35 rows_so_far=18,000,000 rate=455,464 rows/sec shards_written=34
+2026-07-03 15:30:16 | INFO     | [MEMORY] after chunk 35: 632.6 MB RSS
+2026-07-03 15:30:22 | INFO     | [STREAM] chunk=40 rows_so_far=20,500,000 rate=449,545 rows/sec shards_written=39
+2026-07-03 15:30:22 | INFO     | [MEMORY] after chunk 40: 641.9 MB RSS
+2026-07-03 15:30:28 | INFO     | [STREAM] chunk=45 rows_so_far=23,000,000 rate=445,798 rows/sec shards_written=44
+2026-07-03 15:30:28 | INFO     | [MEMORY] after chunk 45: 639.4 MB RSS
+2026-07-03 15:30:34 | INFO     | [STREAM] chunk=50 rows_so_far=25,500,000 rate=442,864 rows/sec shards_written=49
+2026-07-03 15:30:34 | INFO     | [MEMORY] after chunk 50: 624.6 MB RSS
+2026-07-03 15:30:40 | INFO     | [STREAM] chunk=55 rows_so_far=28,000,000 rate=440,625 rows/sec shards_written=54
+2026-07-03 15:30:40 | INFO     | [MEMORY] after chunk 55: 627.1 MB RSS
+2026-07-03 15:30:46 | INFO     | [STREAM] chunk=60 rows_so_far=30,500,000 rate=438,746 rows/sec shards_written=59
+2026-07-03 15:30:46 | INFO     | [MEMORY] after chunk 60: 641.3 MB RSS
+2026-07-03 15:30:51 | INFO     | [STREAM] chunk=65 rows_so_far=32,704,166 rate=436,827 rows/sec shards_written=64
+2026-07-03 15:30:51 | INFO     | [MEMORY] after chunk 65: 626.5 MB RSS
+2026-07-03 15:30:52 | INFO     | Finished streaming 32,704,166 rows in 74.9s
+2026-07-03 15:30:52 | WARNING  | 2,629,700 row(s) had an event_type outside ['logon', 'logoff', 'device', 'http', 'file'] and were not converted into edges (see module docstring, assumption #1).
+2026-07-03 15:30:52 | INFO     | [EDGES] User__accesses__PC: 1,259,878 temporal edges across 4 shard(s)
+2026-07-03 15:30:52 | INFO     | [EDGES] User__touches__FileExtension: 445,581 temporal edges across 2 shard(s)
+2026-07-03 15:30:52 | INFO     | [EDGES] User__visits__WebsiteDomain: 28,369,007 temporal edges across 58 shard(s)
+2026-07-03 15:30:52 | INFO     | [MEMORY] after streaming events (shards on disk, nothing accumulated): 622.9 MB RSS
+2026-07-03 15:30:52 | INFO     | Assembling node/structural skeleton graph (no event edges attached)
+2026-07-03 15:30:52 | INFO     | HeteroData(
+  User={
+    x=[1000, 47],
+    num_nodes=1000,
+  },
+  Department={
+    x=[23, 1],
+    num_nodes=23,
+  },
+  Role={
+    x=[42, 1],
+    num_nodes=42,
+  },
+  Team={
+    x=[39, 1],
+    num_nodes=39,
+  },
+  BusinessUnit={
+    x=[1, 1],
+    num_nodes=1,
+  },
+  PC={
+    x=[1003, 1],
+    num_nodes=1003,
+  },
+  WebsiteDomain={
+    x=[475, 1],
+    num_nodes=475,
+  },
+  FileExtension={
+    x=[6, 2],
+    num_nodes=6,
+  },
+  (User, belongs_to, Department)={ edge_index=[2, 1000] },
+  (User, has_role, Role)={ edge_index=[2, 1000] },
+  (User, member_of, Team)={ edge_index=[2, 1000] },
+  (User, part_of, BusinessUnit)={ edge_index=[2, 1000] },
+  (User, works_with, User)={ edge_index=[2, 20374] }
+)
+2026-07-03 15:30:52 | INFO     | Validating node/structural skeleton
+2026-07-03 15:30:52 | INFO     | [VALIDATION] Skeleton checks passed
+2026-07-03 15:30:52 | INFO     | Validating edge shards (streaming, one shard at a time)
+2026-07-03 15:30:53 | INFO     | [VALIDATION] All shard checks passed
+2026-07-03 15:30:53 | INFO     | Saving node/structural skeleton to graph\output\node_graph_skeleton.pt
+2026-07-03 15:30:53 | INFO     | Saving edge shard manifest (64 shards) to graph\output\edge_shard_manifest.json
+2026-07-03 15:30:53 | INFO     | Saving preprocessing artifacts to graph\output\preprocessing_artifacts.pkl
+2026-07-03 15:30:53 | INFO     | Save complete
+2026-07-03 15:30:53 | INFO     | ==============================================================================
+2026-07-03 15:30:53 | INFO     | BUILD SUMMARY
+2026-07-03 15:30:53 | INFO     |   Users:                          1,000
+2026-07-03 15:30:53 | INFO     |   Departments:                    23
+2026-07-03 15:30:53 | INFO     |   Roles:                          42
+2026-07-03 15:30:53 | INFO     |   Teams:                          39
+2026-07-03 15:30:53 | INFO     |   Business units:                 1
+2026-07-03 15:30:53 | INFO     |   PCs:                            1,003
+2026-07-03 15:30:53 | INFO     |   Website domains:                475
+2026-07-03 15:30:53 | INFO     |   File extensions:                6
+2026-07-03 15:30:53 | INFO     |   Total event rows read:          32,704,166
+2026-07-03 15:30:53 | INFO     |   Skipped (unmapped event_type):  2,629,700
+2026-07-03 15:30:53 | INFO     |   Dropped (unknown user_id):      0
+2026-07-03 15:30:53 | INFO     |   Invalid/unparseable timestamps: 0 (coerced to epoch 0)
+2026-07-03 15:30:53 | INFO     |   Total shards written:           64
+2026-07-03 15:30:53 | INFO     |   Edges User__accesses__PC: 1,259,878 across 4 shard(s)
+2026-07-03 15:30:53 | INFO     |   Edges User__touches__FileExtension: 445,581 across 2 shard(s)
+2026-07-03 15:30:53 | INFO     |   Edges User__visits__WebsiteDomain: 28,369,007 across 58 shard(s)
+2026-07-03 15:30:53 | INFO     |   Skeleton validation passed:      True
+2026-07-03 15:30:53 | INFO     |   Shard validation passed:         True
+2026-07-03 15:30:53 | INFO     |   Total build time:                76.6s
+2026-07-03 15:30:53 | INFO     |   Skeleton graph saved to:         graph\output\node_graph_skeleton.pt
+2026-07-03 15:30:53 | INFO     |   Shard manifest saved to:         graph\output\edge_shard_manifest.json
+2026-07-03 15:30:53 | INFO     |   Artifacts saved to:              graph\output\preprocessing_artifacts.pkl
+2026-07-03 15:30:53 | INFO     | ==============================================================================
+2026-07-03 15:42:17 | INFO     | ==============================================================================
+2026-07-03 15:42:17 | INFO     | Starting streaming, shard-based temporal event graph build
+2026-07-03 15:42:17 | INFO     | ==============================================================================
+2026-07-03 15:42:17 | INFO     | Loading LDAP directory snapshot from data\raw\LDAP.csv
+2026-07-03 15:42:17 | INFO     | [DIAG] LDAP.csv user_id -> source dtype=str, raw samples=['CEL0561', 'CRD0624', 'JFC0557'], normalized samples=['CEL0561', 'CRD0624', 'JFC0557']
+2026-07-03 15:42:17 | INFO     | Loaded LDAP records for 16,743 identities
+2026-07-03 15:42:17 | INFO     | Loading fused user features from data\processed\fused_features.csv
+2026-07-03 15:42:17 | INFO     | [DIAG] fused_features.csv user_id -> source dtype=str, raw samples=['aae0190', 'aaf0535', 'aaf0791'], normalized samples=['AAE0190', 'AAF0535', 'AAF0791']
+2026-07-03 15:42:17 | WARNING  | Dropping 8 non-numeric feature column(s) that cannot be placed in a float tensor as-is: ['employee_name', 'email', 'role', 'functional_unit', 'department', 'team', 'supervisor', 'employee_name_psychometric']
+2026-07-03 15:42:17 | INFO     | Loaded 1,000 users with 47 raw feature dimensions each
+2026-07-03 15:42:17 | INFO     | Loading file sensitivity table from data\processed\file_sensitivity.csv
+2026-07-03 15:42:17 | INFO     | Loaded sensitivity scores for 6 file extensions
+2026-07-03 15:42:17 | INFO     | [MEMORY] after loading static tables: 403.0 MB RSS
+2026-07-03 15:42:17 | INFO     | Building structural edges from LDAP (each exists exactly once per user)
+2026-07-03 15:42:17 | INFO     | [EDGES] User-belongs_to->Department: 1,000 structural edges
+2026-07-03 15:42:17 | INFO     | [EDGES] User-has_role->Role: 1,000 structural edges
+2026-07-03 15:42:17 | INFO     | [EDGES] User-member_of->Team: 1,000 structural edges
+2026-07-03 15:42:17 | INFO     | [EDGES] User-part_of->BusinessUnit: 1,000 structural edges
+2026-07-03 15:42:17 | INFO     | [EDGES] User-works_with->User: 20,374 structural edges
+2026-07-03 15:42:17 | INFO     | Streaming events from data\processed\unified_events.csv in chunks of 500,000 rows
+2026-07-03 15:42:17 | INFO     | Each chunk is converted to per-relation shards and written to disk immediately; no edge data is retained across chunk boundaries.
+2026-07-03 15:42:17 | INFO     | [DIAG] unique event_type values in first chunk: ['logon']
+2026-07-03 15:42:18 | INFO     | [STREAM] chunk=0 rows_so_far=500,000 rate=672,342 rows/sec shards_written=1
+2026-07-03 15:42:18 | INFO     | [MEMORY] after chunk 0: 449.6 MB RSS
+2026-07-03 15:42:21 | INFO     | [STREAM] chunk=5 rows_so_far=3,000,000 rate=719,088 rows/sec shards_written=2
+2026-07-03 15:42:21 | INFO     | [MEMORY] after chunk 5: 571.6 MB RSS
+2026-07-03 15:42:26 | INFO     | [STREAM] chunk=10 rows_so_far=5,500,000 rate=603,061 rows/sec shards_written=9
+2026-07-03 15:42:26 | INFO     | [MEMORY] after chunk 10: 661.4 MB RSS
+2026-07-03 15:42:32 | INFO     | [STREAM] chunk=15 rows_so_far=8,000,000 rate=531,759 rows/sec shards_written=14
+2026-07-03 15:42:32 | INFO     | [MEMORY] after chunk 15: 619.0 MB RSS
+2026-07-03 15:42:38 | INFO     | [STREAM] chunk=20 rows_so_far=10,500,000 rate=501,390 rows/sec shards_written=19
+2026-07-03 15:42:38 | INFO     | [MEMORY] after chunk 20: 633.3 MB RSS
+2026-07-03 15:42:44 | INFO     | [STREAM] chunk=25 rows_so_far=13,000,000 rate=483,813 rows/sec shards_written=24
+2026-07-03 15:42:44 | INFO     | [MEMORY] after chunk 25: 631.7 MB RSS
+2026-07-03 15:42:50 | INFO     | [STREAM] chunk=30 rows_so_far=15,500,000 rate=471,888 rows/sec shards_written=29
+2026-07-03 15:42:50 | INFO     | [MEMORY] after chunk 30: 629.7 MB RSS
+2026-07-03 15:42:56 | INFO     | [STREAM] chunk=35 rows_so_far=18,000,000 rate=462,828 rows/sec shards_written=34
+2026-07-03 15:42:56 | INFO     | [MEMORY] after chunk 35: 631.4 MB RSS
+2026-07-03 15:43:02 | INFO     | [STREAM] chunk=40 rows_so_far=20,500,000 rate=457,538 rows/sec shards_written=39
+2026-07-03 15:43:02 | INFO     | [MEMORY] after chunk 40: 640.7 MB RSS
+2026-07-03 15:43:08 | INFO     | [STREAM] chunk=45 rows_so_far=23,000,000 rate=452,899 rows/sec shards_written=44
+2026-07-03 15:43:08 | INFO     | [MEMORY] after chunk 45: 638.2 MB RSS
+2026-07-03 15:43:14 | INFO     | [STREAM] chunk=50 rows_so_far=25,500,000 rate=448,650 rows/sec shards_written=49
+2026-07-03 15:43:14 | INFO     | [MEMORY] after chunk 50: 623.5 MB RSS
+2026-07-03 15:43:20 | INFO     | [STREAM] chunk=55 rows_so_far=28,000,000 rate=445,114 rows/sec shards_written=54
+2026-07-03 15:43:20 | INFO     | [MEMORY] after chunk 55: 624.9 MB RSS
+2026-07-03 15:43:26 | INFO     | [STREAM] chunk=60 rows_so_far=30,500,000 rate=442,724 rows/sec shards_written=59
+2026-07-03 15:43:26 | INFO     | [MEMORY] after chunk 60: 639.1 MB RSS
+2026-07-03 15:43:32 | INFO     | [STREAM] chunk=65 rows_so_far=33,000,000 rate=442,003 rows/sec shards_written=65
+2026-07-03 15:43:32 | INFO     | [MEMORY] after chunk 65: 653.9 MB RSS
+2026-07-03 15:43:35 | INFO     | [STREAM] chunk=70 rows_so_far=35,500,000 rate=454,738 rows/sec shards_written=67
+2026-07-03 15:43:35 | INFO     | [MEMORY] after chunk 70: 690.3 MB RSS
+2026-07-03 15:43:40 | INFO     | [STREAM] chunk=75 rows_so_far=38,000,000 rate=458,858 rows/sec shards_written=73
+2026-07-03 15:43:40 | INFO     | [MEMORY] after chunk 75: 816.6 MB RSS
+2026-07-03 15:43:46 | INFO     | [STREAM] chunk=80 rows_so_far=40,500,000 rate=457,444 rows/sec shards_written=78
+2026-07-03 15:43:46 | INFO     | [MEMORY] after chunk 80: 820.1 MB RSS
+2026-07-03 15:43:51 | INFO     | [STREAM] chunk=85 rows_so_far=43,000,000 rate=456,261 rows/sec shards_written=83
+2026-07-03 15:43:51 | INFO     | [MEMORY] after chunk 85: 820.1 MB RSS
+2026-07-03 15:43:57 | INFO     | [STREAM] chunk=90 rows_so_far=45,500,000 rate=453,816 rows/sec shards_written=88
+2026-07-03 15:43:57 | INFO     | [MEMORY] after chunk 90: 824.2 MB RSS
+2026-07-03 15:44:03 | INFO     | [STREAM] chunk=95 rows_so_far=48,000,000 rate=452,013 rows/sec shards_written=93
+2026-07-03 15:44:03 | INFO     | [MEMORY] after chunk 95: 825.2 MB RSS
+2026-07-03 15:44:09 | INFO     | [STREAM] chunk=100 rows_so_far=50,500,000 rate=450,697 rows/sec shards_written=98
+2026-07-03 15:44:09 | INFO     | [MEMORY] after chunk 100: 825.3 MB RSS
+2026-07-03 15:44:15 | INFO     | [STREAM] chunk=105 rows_so_far=53,000,000 rate=449,400 rows/sec shards_written=103
+2026-07-03 15:44:15 | INFO     | [MEMORY] after chunk 105: 825.3 MB RSS
+2026-07-03 15:44:21 | INFO     | [STREAM] chunk=110 rows_so_far=55,500,000 rate=448,197 rows/sec shards_written=108
+2026-07-03 15:44:21 | INFO     | [MEMORY] after chunk 110: 825.3 MB RSS
+2026-07-03 15:44:27 | INFO     | [STREAM] chunk=115 rows_so_far=58,000,000 rate=447,194 rows/sec shards_written=113
+2026-07-03 15:44:27 | INFO     | [MEMORY] after chunk 115: 835.9 MB RSS
+2026-07-03 15:44:33 | INFO     | [STREAM] chunk=120 rows_so_far=60,500,000 rate=446,684 rows/sec shards_written=118
+2026-07-03 15:44:33 | INFO     | [MEMORY] after chunk 120: 837.7 MB RSS
+2026-07-03 15:44:38 | INFO     | [STREAM] chunk=125 rows_so_far=63,000,000 rate=446,093 rows/sec shards_written=123
+2026-07-03 15:44:38 | INFO     | [MEMORY] after chunk 125: 837.7 MB RSS
+2026-07-03 15:44:44 | INFO     | [STREAM] chunk=130 rows_so_far=65,408,332 rate=445,465 rows/sec shards_written=128
+2026-07-03 15:44:44 | INFO     | [MEMORY] after chunk 130: 837.0 MB RSS
+2026-07-03 15:44:44 | INFO     | Finished streaming 65,408,332 rows in 146.9s
+2026-07-03 15:44:44 | WARNING  | 5,259,400 row(s) had an event_type outside ['logon', 'logoff', 'device', 'http', 'file'] and were not converted into edges (see module docstring, assumption #1).
+2026-07-03 15:44:44 | INFO     | [EDGES] User__accesses__PC: 2,519,756 temporal edges across 9 shard(s)
+2026-07-03 15:44:44 | INFO     | [EDGES] User__touches__FileExtension: 891,162 temporal edges across 4 shard(s)
+2026-07-03 15:44:44 | INFO     | [EDGES] User__visits__WebsiteDomain: 56,738,014 temporal edges across 115 shard(s)
+2026-07-03 15:44:44 | INFO     | [MEMORY] after streaming events (shards on disk, nothing accumulated): 833.9 MB RSS
+2026-07-03 15:44:44 | INFO     | Assembling node/structural skeleton graph (no event edges attached)
+2026-07-03 15:44:44 | INFO     | HeteroData(
+  User={
+    x=[1000, 47],
+    num_nodes=1000,
+  },
+  Department={
+    x=[23, 1],
+    num_nodes=23,
+  },
+  Role={
+    x=[42, 1],
+    num_nodes=42,
+  },
+  Team={
+    x=[39, 1],
+    num_nodes=39,
+  },
+  BusinessUnit={
+    x=[1, 1],
+    num_nodes=1,
+  },
+  PC={
+    x=[1003, 1],
+    num_nodes=1003,
+  },
+  WebsiteDomain={
+    x=[475, 1],
+    num_nodes=475,
+  },
+  FileExtension={
+    x=[6, 2],
+    num_nodes=6,
+  },
+  (User, belongs_to, Department)={ edge_index=[2, 1000] },
+  (User, has_role, Role)={ edge_index=[2, 1000] },
+  (User, member_of, Team)={ edge_index=[2, 1000] },
+  (User, part_of, BusinessUnit)={ edge_index=[2, 1000] },
+  (User, works_with, User)={ edge_index=[2, 20374] }
+)
+2026-07-03 15:44:44 | INFO     | Validating node/structural skeleton
+2026-07-03 15:44:44 | INFO     | [VALIDATION] Skeleton checks passed
+2026-07-03 15:44:44 | INFO     | Validating edge shards (streaming, one shard at a time)
+2026-07-03 15:44:46 | INFO     | [VALIDATION] All shard checks passed
+2026-07-03 15:44:46 | INFO     | Saving node/structural skeleton to graph\output\node_graph_skeleton.pt
+2026-07-03 15:44:46 | INFO     | Saving edge shard manifest (128 shards) to graph\output\edge_shard_manifest.json
+2026-07-03 15:44:46 | INFO     | Saving preprocessing artifacts to graph\output\preprocessing_artifacts.pkl
+2026-07-03 15:44:46 | INFO     | Save complete
+2026-07-03 15:44:46 | INFO     | ==============================================================================
+2026-07-03 15:44:46 | INFO     | BUILD SUMMARY
+2026-07-03 15:44:46 | INFO     |   Users:                          1,000
+2026-07-03 15:44:46 | INFO     |   Departments:                    23
+2026-07-03 15:44:46 | INFO     |   Roles:                          42
+2026-07-03 15:44:46 | INFO     |   Teams:                          39
+2026-07-03 15:44:46 | INFO     |   Business units:                 1
+2026-07-03 15:44:46 | INFO     |   PCs:                            1,003
+2026-07-03 15:44:46 | INFO     |   Website domains:                475
+2026-07-03 15:44:46 | INFO     |   File extensions:                6
+2026-07-03 15:44:46 | INFO     |   Total event rows read:          65,408,332
+2026-07-03 15:44:46 | INFO     |   Skipped (unmapped event_type):  5,259,400
+2026-07-03 15:44:46 | INFO     |   Dropped (unknown user_id):      0
+2026-07-03 15:44:46 | INFO     |   Invalid/unparseable timestamps: 0 (coerced to epoch 0)
+2026-07-03 15:44:46 | INFO     |   Total shards written:           128
+2026-07-03 15:44:46 | INFO     |   Edges User__accesses__PC: 2,519,756 across 9 shard(s)
+2026-07-03 15:44:46 | INFO     |   Edges User__touches__FileExtension: 891,162 across 4 shard(s)
+2026-07-03 15:44:46 | INFO     |   Edges User__visits__WebsiteDomain: 56,738,014 across 115 shard(s)
+2026-07-03 15:44:46 | INFO     |   Skeleton validation passed:      True
+2026-07-03 15:44:46 | INFO     |   Shard validation passed:         True
+2026-07-03 15:44:46 | INFO     |   Total build time:                149.8s
+2026-07-03 15:44:46 | INFO     |   Skeleton graph saved to:         graph\output\node_graph_skeleton.pt
+2026-07-03 15:44:46 | INFO     |   Shard manifest saved to:         graph\output\edge_shard_manifest.json
+2026-07-03 15:44:46 | INFO     |   Artifacts saved to:              graph\output\preprocessing_artifacts.pkl
+2026-07-03 15:44:46 | INFO     | ==============================================================================
+2026-07-03 15:46:14 | INFO     | ==============================================================================
+2026-07-03 15:46:14 | INFO     | Starting streaming, shard-based temporal event graph build
+2026-07-03 15:46:14 | INFO     | ==============================================================================
+2026-07-03 15:46:14 | INFO     | Loading LDAP directory snapshot from data\raw\LDAP.csv
+2026-07-03 15:46:14 | INFO     | [DIAG] LDAP.csv user_id -> source dtype=str, raw samples=['CEL0561', 'CRD0624', 'JFC0557'], normalized samples=['CEL0561', 'CRD0624', 'JFC0557']
+2026-07-03 15:46:14 | INFO     | Loaded LDAP records for 16,743 identities
+2026-07-03 15:46:14 | INFO     | Loading fused user features from data\processed\fused_features.csv
+2026-07-03 15:46:14 | INFO     | [DIAG] fused_features.csv user_id -> source dtype=str, raw samples=['aae0190', 'aaf0535', 'aaf0791'], normalized samples=['AAE0190', 'AAF0535', 'AAF0791']
+2026-07-03 15:46:14 | WARNING  | Dropping 8 non-numeric feature column(s) that cannot be placed in a float tensor as-is: ['employee_name', 'email', 'role', 'functional_unit', 'department', 'team', 'supervisor', 'employee_name_psychometric']
+2026-07-03 15:46:14 | INFO     | Loaded 1,000 users with 47 raw feature dimensions each
+2026-07-03 15:46:14 | INFO     | Loading file sensitivity table from data\processed\file_sensitivity.csv
+2026-07-03 15:46:15 | INFO     | Loaded sensitivity scores for 6 file extensions
+2026-07-03 15:46:15 | INFO     | [MEMORY] after loading static tables: 402.1 MB RSS
+2026-07-03 15:46:15 | INFO     | Building structural edges from LDAP (each exists exactly once per user)
+2026-07-03 15:46:15 | INFO     | [EDGES] User-belongs_to->Department: 1,000 structural edges
+2026-07-03 15:46:15 | INFO     | [EDGES] User-has_role->Role: 1,000 structural edges
+2026-07-03 15:46:15 | INFO     | [EDGES] User-member_of->Team: 1,000 structural edges
+2026-07-03 15:46:15 | INFO     | [EDGES] User-part_of->BusinessUnit: 1,000 structural edges
+2026-07-03 15:46:15 | INFO     | [EDGES] User-works_with->User: 20,374 structural edges
+2026-07-03 15:46:15 | INFO     | Streaming events from data\processed\unified_events.csv in chunks of 500,000 rows
+2026-07-03 15:46:15 | INFO     | Each chunk is converted to per-relation shards and written to disk immediately; no edge data is retained across chunk boundaries.
+2026-07-03 15:46:15 | INFO     | [DIAG] unique event_type values in first chunk: ['logon']
+2026-07-03 15:46:15 | INFO     | [STREAM] chunk=0 rows_so_far=500,000 rate=685,065 rows/sec shards_written=1
+2026-07-03 15:46:15 | INFO     | [MEMORY] after chunk 0: 448.0 MB RSS
+2026-07-03 15:46:19 | INFO     | [STREAM] chunk=5 rows_so_far=3,000,000 rate=703,139 rows/sec shards_written=2
+2026-07-03 15:46:19 | INFO     | [MEMORY] after chunk 5: 565.9 MB RSS
+2026-07-03 15:46:25 | INFO     | [STREAM] chunk=10 rows_so_far=5,500,000 rate=516,268 rows/sec shards_written=9
+2026-07-03 15:46:25 | INFO     | [MEMORY] after chunk 10: 611.6 MB RSS
+2026-07-03 15:46:33 | INFO     | [STREAM] chunk=15 rows_so_far=8,000,000 rate=428,994 rows/sec shards_written=14
+2026-07-03 15:46:33 | INFO     | [MEMORY] after chunk 15: 564.4 MB RSS
+2026-07-03 15:46:41 | INFO     | [STREAM] chunk=20 rows_so_far=10,500,000 rate=395,336 rows/sec shards_written=19
+2026-07-03 15:46:41 | INFO     | [MEMORY] after chunk 20: 563.3 MB RSS
+2026-07-03 15:46:49 | INFO     | [STREAM] chunk=25 rows_so_far=13,000,000 rate=376,256 rows/sec shards_written=24
+2026-07-03 15:46:49 | INFO     | [MEMORY] after chunk 25: 605.0 MB RSS
+2026-07-03 15:46:57 | INFO     | [STREAM] chunk=30 rows_so_far=15,500,000 rate=363,371 rows/sec shards_written=29
+2026-07-03 15:46:57 | INFO     | [MEMORY] after chunk 30: 563.0 MB RSS
+2026-07-03 15:47:05 | INFO     | [STREAM] chunk=35 rows_so_far=18,000,000 rate=354,600 rows/sec shards_written=34
+2026-07-03 15:47:05 | INFO     | [MEMORY] after chunk 35: 559.7 MB RSS
+2026-07-03 15:47:13 | INFO     | [STREAM] chunk=40 rows_so_far=20,500,000 rate=348,186 rows/sec shards_written=39
+2026-07-03 15:47:13 | INFO     | [MEMORY] after chunk 40: 609.4 MB RSS
+2026-07-03 15:47:22 | INFO     | [STREAM] chunk=45 rows_so_far=23,000,000 rate=343,386 rows/sec shards_written=44
+2026-07-03 15:47:22 | INFO     | [MEMORY] after chunk 45: 563.8 MB RSS
+2026-07-03 15:47:30 | INFO     | [STREAM] chunk=50 rows_so_far=25,500,000 rate=339,910 rows/sec shards_written=49
+2026-07-03 15:47:30 | INFO     | [MEMORY] after chunk 50: 561.6 MB RSS
+2026-07-03 15:47:38 | INFO     | [STREAM] chunk=55 rows_so_far=28,000,000 rate=337,138 rows/sec shards_written=54
+2026-07-03 15:47:38 | INFO     | [MEMORY] after chunk 55: 599.1 MB RSS
+2026-07-03 15:47:46 | INFO     | [STREAM] chunk=60 rows_so_far=30,500,000 rate=334,628 rows/sec shards_written=59
+2026-07-03 15:47:46 | INFO     | [MEMORY] after chunk 60: 570.9 MB RSS
+2026-07-03 15:47:53 | INFO     | [STREAM] chunk=65 rows_so_far=33,000,000 rate=334,061 rows/sec shards_written=65
+2026-07-03 15:47:53 | INFO     | [MEMORY] after chunk 65: 621.8 MB RSS
+2026-07-03 15:47:57 | INFO     | [STREAM] chunk=70 rows_so_far=35,500,000 rate=347,281 rows/sec shards_written=67
+2026-07-03 15:47:57 | INFO     | [MEMORY] after chunk 70: 584.2 MB RSS
+2026-07-03 15:48:03 | INFO     | [STREAM] chunk=75 rows_so_far=38,000,000 rate=351,017 rows/sec shards_written=73
+2026-07-03 15:48:03 | INFO     | [MEMORY] after chunk 75: 577.6 MB RSS
+2026-07-03 15:48:11 | INFO     | [STREAM] chunk=80 rows_so_far=40,500,000 rate=348,005 rows/sec shards_written=78
+2026-07-03 15:48:11 | INFO     | [MEMORY] after chunk 80: 571.3 MB RSS
+2026-07-03 15:48:19 | INFO     | [STREAM] chunk=85 rows_so_far=43,000,000 rate=345,660 rows/sec shards_written=83
+2026-07-03 15:48:19 | INFO     | [MEMORY] after chunk 85: 572.6 MB RSS
+2026-07-03 15:48:27 | INFO     | [STREAM] chunk=90 rows_so_far=45,500,000 rate=343,638 rows/sec shards_written=88
+2026-07-03 15:48:27 | INFO     | [MEMORY] after chunk 90: 564.0 MB RSS
+2026-07-03 15:48:35 | INFO     | [STREAM] chunk=95 rows_so_far=48,000,000 rate=342,035 rows/sec shards_written=93
+2026-07-03 15:48:35 | INFO     | [MEMORY] after chunk 95: 563.8 MB RSS
+2026-07-03 15:48:43 | INFO     | [STREAM] chunk=100 rows_so_far=50,500,000 rate=340,546 rows/sec shards_written=98
+2026-07-03 15:48:43 | INFO     | [MEMORY] after chunk 100: 613.3 MB RSS
+2026-07-03 15:48:51 | INFO     | [STREAM] chunk=105 rows_so_far=53,000,000 rate=339,032 rows/sec shards_written=103
+2026-07-03 15:48:51 | INFO     | [MEMORY] after chunk 105: 566.6 MB RSS
+2026-07-03 15:48:59 | INFO     | [STREAM] chunk=110 rows_so_far=55,500,000 rate=337,584 rows/sec shards_written=108
+2026-07-03 15:48:59 | INFO     | [MEMORY] after chunk 110: 573.9 MB RSS
+2026-07-03 15:49:07 | INFO     | [STREAM] chunk=115 rows_so_far=58,000,000 rate=336,030 rows/sec shards_written=113
+2026-07-03 15:49:07 | INFO     | [MEMORY] after chunk 115: 608.4 MB RSS
+2026-07-03 15:49:15 | INFO     | [STREAM] chunk=120 rows_so_far=60,500,000 rate=334,750 rows/sec shards_written=118
+2026-07-03 15:49:15 | INFO     | [MEMORY] after chunk 120: 571.0 MB RSS
+2026-07-03 15:49:23 | INFO     | [STREAM] chunk=125 rows_so_far=63,000,000 rate=333,639 rows/sec shards_written=123
+2026-07-03 15:49:23 | INFO     | [MEMORY] after chunk 125: 606.9 MB RSS
+2026-07-03 15:49:31 | INFO     | [STREAM] chunk=130 rows_so_far=65,408,332 rate=332,715 rows/sec shards_written=128
+2026-07-03 15:49:31 | INFO     | [MEMORY] after chunk 130: 551.7 MB RSS
+2026-07-03 15:49:31 | INFO     | Finished streaming 65,408,332 rows in 196.7s
+2026-07-03 15:49:31 | WARNING  | 5,259,400 row(s) had an event_type outside ['logon', 'logoff', 'device', 'http', 'file'] and were not converted into edges (see module docstring, assumption #1).
+2026-07-03 15:49:31 | INFO     | [EDGES] User__accesses__PC: 2,519,756 temporal edges across 9 shard(s)
+2026-07-03 15:49:31 | INFO     | [EDGES] User__touches__FileExtension: 891,162 temporal edges across 4 shard(s)
+2026-07-03 15:49:31 | INFO     | [EDGES] User__visits__WebsiteDomain: 56,738,014 temporal edges across 115 shard(s)
+2026-07-03 15:49:31 | INFO     | [MEMORY] after streaming events (shards on disk, nothing accumulated): 546.8 MB RSS
+2026-07-03 15:49:31 | INFO     | Assembling node/structural skeleton graph (no event edges attached)
+2026-07-03 15:49:31 | INFO     | HeteroData(
+  User={
+    x=[1000, 47],
+    num_nodes=1000,
+  },
+  Department={
+    x=[23, 1],
+    num_nodes=23,
+  },
+  Role={
+    x=[42, 1],
+    num_nodes=42,
+  },
+  Team={
+    x=[39, 1],
+    num_nodes=39,
+  },
+  BusinessUnit={
+    x=[1, 1],
+    num_nodes=1,
+  },
+  PC={
+    x=[1003, 1],
+    num_nodes=1003,
+  },
+  WebsiteDomain={
+    x=[475, 1],
+    num_nodes=475,
+  },
+  FileExtension={
+    x=[6, 2],
+    num_nodes=6,
+  },
+  (User, belongs_to, Department)={ edge_index=[2, 1000] },
+  (User, has_role, Role)={ edge_index=[2, 1000] },
+  (User, member_of, Team)={ edge_index=[2, 1000] },
+  (User, part_of, BusinessUnit)={ edge_index=[2, 1000] },
+  (User, works_with, User)={ edge_index=[2, 20374] }
+)
+2026-07-03 15:49:31 | INFO     | Validating node/structural skeleton
+2026-07-03 15:49:31 | INFO     | [VALIDATION] Skeleton checks passed
+2026-07-03 15:49:31 | INFO     | Validating edge shards (streaming, one shard at a time)
+2026-07-03 15:49:34 | INFO     | [VALIDATION] All shard checks passed
+2026-07-03 15:49:34 | INFO     | Saving node/structural skeleton to graph\output\node_graph_skeleton.pt
+2026-07-03 15:49:34 | INFO     | Saving edge shard manifest (128 shards) to graph\output\edge_shard_manifest.json
+2026-07-03 15:49:34 | INFO     | Saving preprocessing artifacts to graph\output\preprocessing_artifacts.pkl
+2026-07-03 15:49:34 | INFO     | Save complete
+2026-07-03 15:49:34 | INFO     | ==============================================================================
+2026-07-03 15:49:34 | INFO     | BUILD SUMMARY
+2026-07-03 15:49:34 | INFO     |   Users:                          1,000
+2026-07-03 15:49:34 | INFO     |   Departments:                    23
+2026-07-03 15:49:34 | INFO     |   Roles:                          42
+2026-07-03 15:49:34 | INFO     |   Teams:                          39
+2026-07-03 15:49:34 | INFO     |   Business units:                 1
+2026-07-03 15:49:34 | INFO     |   PCs:                            1,003
+2026-07-03 15:49:34 | INFO     |   Website domains:                475
+2026-07-03 15:49:34 | INFO     |   File extensions:                6
+2026-07-03 15:49:34 | INFO     |   Total event rows read:          65,408,332
+2026-07-03 15:49:34 | INFO     |   Skipped (unmapped event_type):  5,259,400
+2026-07-03 15:49:34 | INFO     |   Dropped (unknown user_id):      0
+2026-07-03 15:49:34 | INFO     |   Invalid/unparseable timestamps: 0 (coerced to epoch 0)
+2026-07-03 15:49:34 | INFO     |   Total shards written:           128
+2026-07-03 15:49:34 | INFO     |   Edges User__accesses__PC: 2,519,756 across 9 shard(s)
+2026-07-03 15:49:34 | INFO     |   Edges User__touches__FileExtension: 891,162 across 4 shard(s)
+2026-07-03 15:49:34 | INFO     |   Edges User__visits__WebsiteDomain: 56,738,014 across 115 shard(s)
+2026-07-03 15:49:34 | INFO     |   Skeleton validation passed:      True
+2026-07-03 15:49:34 | INFO     |   Shard validation passed:         True
+2026-07-03 15:49:34 | INFO     |   Total build time:                199.5s
+2026-07-03 15:49:34 | INFO     |   Skeleton graph saved to:         graph\output\node_graph_skeleton.pt
+2026-07-03 15:49:34 | INFO     |   Shard manifest saved to:         graph\output\edge_shard_manifest.json
+2026-07-03 15:49:34 | INFO     |   Artifacts saved to:              graph\output\preprocessing_artifacts.pkl
+2026-07-03 15:49:34 | INFO     | ==============================================================================
+2026-07-03 16:00:38 | INFO     | ==============================================================================
+2026-07-03 16:00:38 | INFO     | Starting streaming, shard-based temporal event graph build
+2026-07-03 16:00:38 | INFO     | ==============================================================================
+2026-07-03 16:00:38 | INFO     | Loading LDAP directory snapshot from data\raw\LDAP.csv
+2026-07-03 16:00:38 | INFO     | [DIAG] LDAP.csv user_id -> source dtype=str, raw samples=['CEL0561', 'CRD0624', 'JFC0557'], normalized samples=['CEL0561', 'CRD0624', 'JFC0557']
+2026-07-03 16:00:38 | INFO     | Loaded LDAP records for 16,743 identities
+2026-07-03 16:00:38 | INFO     | Loading fused user features from data\processed\fused_features.csv
+2026-07-03 16:00:38 | INFO     | [DIAG] fused_features.csv user_id -> source dtype=str, raw samples=['aae0190', 'aaf0535', 'aaf0791'], normalized samples=['AAE0190', 'AAF0535', 'AAF0791']
+2026-07-03 16:00:38 | WARNING  | Dropping 8 non-numeric feature column(s) that cannot be placed in a float tensor as-is: ['employee_name', 'email', 'role', 'functional_unit', 'department', 'team', 'supervisor', 'employee_name_psychometric']
+2026-07-03 16:00:38 | INFO     | Loaded 1,000 users with 47 raw feature dimensions each
+2026-07-03 16:00:38 | INFO     | Loading file sensitivity table from data\processed\file_sensitivity.csv
+2026-07-03 16:00:39 | INFO     | Loaded sensitivity scores for 6 file extensions
+2026-07-03 16:00:39 | INFO     | [MEMORY] after loading static tables: 402.8 MB RSS
+2026-07-03 16:00:39 | INFO     | Building structural edges from LDAP (each exists exactly once per user)
+2026-07-03 16:00:39 | INFO     | [EDGES] User-belongs_to->Department: 1,000 structural edges
+2026-07-03 16:00:39 | INFO     | [EDGES] User-has_role->Role: 1,000 structural edges
+2026-07-03 16:00:39 | INFO     | [EDGES] User-member_of->Team: 1,000 structural edges
+2026-07-03 16:00:39 | INFO     | [EDGES] User-part_of->BusinessUnit: 1,000 structural edges
+2026-07-03 16:00:39 | INFO     | [EDGES] User-works_with->User: 20,374 structural edges
+2026-07-03 16:00:39 | INFO     | Streaming events from data\processed\unified_events.csv in chunks of 500,000 rows
+2026-07-03 16:00:39 | INFO     | Each chunk is converted to per-relation shards and written to disk immediately; no edge data is retained across chunk boundaries.
+2026-07-03 16:00:39 | INFO     | [DIAG] unique event_type values in first chunk: ['logon']
+2026-07-03 16:00:39 | INFO     | [STREAM] chunk=0 rows_so_far=500,000 rate=687,388 rows/sec shards_written=1
+2026-07-03 16:00:39 | INFO     | [MEMORY] after chunk 0: 448.4 MB RSS
+2026-07-03 16:00:43 | INFO     | [STREAM] chunk=5 rows_so_far=3,000,000 rate=737,758 rows/sec shards_written=2
+2026-07-03 16:00:43 | INFO     | [MEMORY] after chunk 5: 568.4 MB RSS
+2026-07-03 16:00:48 | INFO     | [STREAM] chunk=10 rows_so_far=5,500,000 rate=609,932 rows/sec shards_written=9
+2026-07-03 16:00:48 | INFO     | [MEMORY] after chunk 10: 659.6 MB RSS
+2026-07-03 16:00:54 | INFO     | [STREAM] chunk=15 rows_so_far=8,000,000 rate=532,378 rows/sec shards_written=14
+2026-07-03 16:00:54 | INFO     | [MEMORY] after chunk 15: 619.1 MB RSS
+2026-07-03 16:01:00 | INFO     | [STREAM] chunk=20 rows_so_far=10,500,000 rate=497,951 rows/sec shards_written=19
+2026-07-03 16:01:00 | INFO     | [MEMORY] after chunk 20: 633.4 MB RSS
+2026-07-03 16:01:06 | INFO     | [STREAM] chunk=25 rows_so_far=13,000,000 rate=480,233 rows/sec shards_written=24
+2026-07-03 16:01:06 | INFO     | [MEMORY] after chunk 25: 631.8 MB RSS
+2026-07-03 16:01:12 | INFO     | [STREAM] chunk=30 rows_so_far=15,500,000 rate=467,743 rows/sec shards_written=29
+2026-07-03 16:01:12 | INFO     | [MEMORY] after chunk 30: 629.8 MB RSS
+2026-07-03 16:01:18 | INFO     | [STREAM] chunk=35 rows_so_far=18,000,000 rate=458,500 rows/sec shards_written=34
+2026-07-03 16:01:18 | INFO     | [MEMORY] after chunk 35: 631.5 MB RSS
+2026-07-03 16:01:24 | INFO     | [STREAM] chunk=40 rows_so_far=20,500,000 rate=452,814 rows/sec shards_written=39
+2026-07-03 16:01:24 | INFO     | [MEMORY] after chunk 40: 638.7 MB RSS
+2026-07-03 16:01:30 | INFO     | [STREAM] chunk=45 rows_so_far=23,000,000 rate=448,399 rows/sec shards_written=44
+2026-07-03 16:01:30 | INFO     | [MEMORY] after chunk 45: 636.3 MB RSS
+2026-07-03 16:01:36 | INFO     | [STREAM] chunk=50 rows_so_far=25,500,000 rate=444,633 rows/sec shards_written=49
+2026-07-03 16:01:36 | INFO     | [MEMORY] after chunk 50: 621.6 MB RSS
+2026-07-03 16:01:42 | INFO     | [STREAM] chunk=55 rows_so_far=28,000,000 rate=441,529 rows/sec shards_written=54
+2026-07-03 16:01:42 | INFO     | [MEMORY] after chunk 55: 624.0 MB RSS
+2026-07-03 16:01:48 | INFO     | [STREAM] chunk=60 rows_so_far=30,500,000 rate=439,239 rows/sec shards_written=59
+2026-07-03 16:01:48 | INFO     | [MEMORY] after chunk 60: 637.2 MB RSS
+2026-07-03 16:01:54 | INFO     | [STREAM] chunk=65 rows_so_far=33,000,000 rate=438,250 rows/sec shards_written=65
+2026-07-03 16:01:54 | INFO     | [MEMORY] after chunk 65: 652.0 MB RSS
+2026-07-03 16:01:57 | INFO     | [STREAM] chunk=70 rows_so_far=35,500,000 rate=450,774 rows/sec shards_written=67
+2026-07-03 16:01:57 | INFO     | [MEMORY] after chunk 70: 689.8 MB RSS
+2026-07-03 16:02:02 | INFO     | [STREAM] chunk=75 rows_so_far=38,000,000 rate=454,859 rows/sec shards_written=73
+2026-07-03 16:02:02 | INFO     | [MEMORY] after chunk 75: 816.1 MB RSS
+2026-07-03 16:02:08 | INFO     | [STREAM] chunk=80 rows_so_far=40,500,000 rate=452,610 rows/sec shards_written=78
+2026-07-03 16:02:08 | INFO     | [MEMORY] after chunk 80: 818.6 MB RSS
+2026-07-03 16:02:14 | INFO     | [STREAM] chunk=85 rows_so_far=43,000,000 rate=450,702 rows/sec shards_written=83
+2026-07-03 16:02:14 | INFO     | [MEMORY] after chunk 85: 818.6 MB RSS
+2026-07-03 16:02:20 | INFO     | [STREAM] chunk=90 rows_so_far=45,500,000 rate=449,450 rows/sec shards_written=88
+2026-07-03 16:02:20 | INFO     | [MEMORY] after chunk 90: 822.7 MB RSS
+2026-07-03 16:02:26 | INFO     | [STREAM] chunk=95 rows_so_far=48,000,000 rate=447,894 rows/sec shards_written=93
+2026-07-03 16:02:26 | INFO     | [MEMORY] after chunk 95: 823.7 MB RSS
+2026-07-03 16:02:32 | INFO     | [STREAM] chunk=100 rows_so_far=50,500,000 rate=446,624 rows/sec shards_written=98
+2026-07-03 16:02:32 | INFO     | [MEMORY] after chunk 100: 823.8 MB RSS
+2026-07-03 16:02:38 | INFO     | [STREAM] chunk=105 rows_so_far=53,000,000 rate=445,447 rows/sec shards_written=103
+2026-07-03 16:02:38 | INFO     | [MEMORY] after chunk 105: 823.8 MB RSS
+2026-07-03 16:02:44 | INFO     | [STREAM] chunk=110 rows_so_far=55,500,000 rate=444,314 rows/sec shards_written=108
+2026-07-03 16:02:44 | INFO     | [MEMORY] after chunk 110: 822.8 MB RSS
+2026-07-03 16:02:50 | INFO     | [STREAM] chunk=115 rows_so_far=58,000,000 rate=443,141 rows/sec shards_written=113
+2026-07-03 16:02:50 | INFO     | [MEMORY] after chunk 115: 833.4 MB RSS
+2026-07-03 16:02:56 | INFO     | [STREAM] chunk=120 rows_so_far=60,500,000 rate=441,983 rows/sec shards_written=118
+2026-07-03 16:02:56 | INFO     | [MEMORY] after chunk 120: 835.2 MB RSS
+2026-07-03 16:03:01 | INFO     | [STREAM] chunk=125 rows_so_far=63,000,000 rate=441,075 rows/sec shards_written=123
+2026-07-03 16:03:01 | INFO     | [MEMORY] after chunk 125: 835.2 MB RSS
+2026-07-03 16:03:07 | INFO     | [STREAM] chunk=130 rows_so_far=65,500,000 rate=440,567 rows/sec shards_written=129
+2026-07-03 16:03:07 | INFO     | [MEMORY] after chunk 130: 836.6 MB RSS
+2026-07-03 16:03:11 | INFO     | [STREAM] chunk=135 rows_so_far=68,000,000 rate=446,926 rows/sec shards_written=131
+2026-07-03 16:03:11 | INFO     | [MEMORY] after chunk 135: 837.9 MB RSS
+2026-07-03 16:03:15 | INFO     | [STREAM] chunk=140 rows_so_far=70,500,000 rate=449,967 rows/sec shards_written=137
+2026-07-03 16:03:15 | INFO     | [MEMORY] after chunk 140: 840.0 MB RSS
+2026-07-03 16:03:21 | INFO     | [STREAM] chunk=145 rows_so_far=73,000,000 rate=449,338 rows/sec shards_written=142
+2026-07-03 16:03:21 | INFO     | [MEMORY] after chunk 145: 840.0 MB RSS
+2026-07-03 16:03:27 | INFO     | [STREAM] chunk=150 rows_so_far=75,500,000 rate=448,719 rows/sec shards_written=147
+2026-07-03 16:03:27 | INFO     | [MEMORY] after chunk 150: 841.0 MB RSS
+2026-07-03 16:03:33 | INFO     | [STREAM] chunk=155 rows_so_far=78,000,000 rate=448,255 rows/sec shards_written=152
+2026-07-03 16:03:33 | INFO     | [MEMORY] after chunk 155: 841.0 MB RSS
+2026-07-03 16:03:38 | INFO     | [STREAM] chunk=160 rows_so_far=80,500,000 rate=447,714 rows/sec shards_written=157
+2026-07-03 16:03:38 | INFO     | [MEMORY] after chunk 160: 841.0 MB RSS
+2026-07-03 16:03:44 | INFO     | [STREAM] chunk=165 rows_so_far=83,000,000 rate=447,176 rows/sec shards_written=162
+2026-07-03 16:03:44 | INFO     | [MEMORY] after chunk 165: 841.0 MB RSS
+2026-07-03 16:03:50 | INFO     | [STREAM] chunk=170 rows_so_far=85,500,000 rate=446,666 rows/sec shards_written=167
+2026-07-03 16:03:50 | INFO     | [MEMORY] after chunk 170: 841.0 MB RSS
+2026-07-03 16:03:56 | INFO     | [STREAM] chunk=175 rows_so_far=88,000,000 rate=446,169 rows/sec shards_written=172
+2026-07-03 16:03:56 | INFO     | [MEMORY] after chunk 175: 842.0 MB RSS
+2026-07-03 16:04:02 | INFO     | [STREAM] chunk=180 rows_so_far=90,500,000 rate=445,618 rows/sec shards_written=177
+2026-07-03 16:04:02 | INFO     | [MEMORY] after chunk 180: 842.1 MB RSS
+2026-07-03 16:04:08 | INFO     | [STREAM] chunk=185 rows_so_far=93,000,000 rate=445,166 rows/sec shards_written=182
+2026-07-03 16:04:08 | INFO     | [MEMORY] after chunk 185: 842.1 MB RSS
+2026-07-03 16:04:13 | INFO     | [STREAM] chunk=190 rows_so_far=95,500,000 rate=444,631 rows/sec shards_written=187
+2026-07-03 16:04:13 | INFO     | [MEMORY] after chunk 190: 843.1 MB RSS
+2026-07-03 16:04:19 | INFO     | [STREAM] chunk=195 rows_so_far=98,000,000 rate=444,173 rows/sec shards_written=192
+2026-07-03 16:04:19 | INFO     | [MEMORY] after chunk 195: 843.1 MB RSS
+2026-07-03 16:04:20 | INFO     | Finished streaming 98,112,498 rows in 221.0s
+2026-07-03 16:04:20 | WARNING  | 7,889,100 row(s) had an event_type outside ['logon', 'logoff', 'device', 'http', 'file'] and were not converted into edges (see module docstring, assumption #1).
+2026-07-03 16:04:20 | INFO     | [EDGES] User__accesses__PC: 3,779,634 temporal edges across 14 shard(s)
+2026-07-03 16:04:20 | INFO     | [EDGES] User__touches__FileExtension: 1,336,743 temporal edges across 6 shard(s)
+2026-07-03 16:04:20 | INFO     | [EDGES] User__visits__WebsiteDomain: 85,107,021 temporal edges across 173 shard(s)
+2026-07-03 16:04:20 | INFO     | [MEMORY] after streaming events (shards on disk, nothing accumulated): 834.2 MB RSS
+2026-07-03 16:04:20 | INFO     | Assembling node/structural skeleton graph (no event edges attached)
+2026-07-03 16:04:20 | INFO     | HeteroData(
+  User={
+    x=[1000, 47],
+    num_nodes=1000,
+  },
+  Department={
+    x=[23, 1],
+    num_nodes=23,
+  },
+  Role={
+    x=[42, 1],
+    num_nodes=42,
+  },
+  Team={
+    x=[39, 1],
+    num_nodes=39,
+  },
+  BusinessUnit={
+    x=[1, 1],
+    num_nodes=1,
+  },
+  PC={
+    x=[1003, 1],
+    num_nodes=1003,
+  },
+  WebsiteDomain={
+    x=[475, 1],
+    num_nodes=475,
+  },
+  FileExtension={
+    x=[6, 2],
+    num_nodes=6,
+  },
+  (User, belongs_to, Department)={ edge_index=[2, 1000] },
+  (User, has_role, Role)={ edge_index=[2, 1000] },
+  (User, member_of, Team)={ edge_index=[2, 1000] },
+  (User, part_of, BusinessUnit)={ edge_index=[2, 1000] },
+  (User, works_with, User)={ edge_index=[2, 20374] }
+)
+2026-07-03 16:04:20 | INFO     | Validating node/structural skeleton
+2026-07-03 16:04:20 | INFO     | [VALIDATION] Skeleton checks passed
+2026-07-03 16:04:20 | INFO     | Validating edge shards (streaming, one shard at a time)
+2026-07-03 16:04:23 | INFO     | [VALIDATION] All shard checks passed
+2026-07-03 16:04:23 | INFO     | Saving node/structural skeleton to graph\output\node_graph_skeleton.pt
+2026-07-03 16:04:23 | INFO     | Saving edge shard manifest (193 shards) to graph\output\edge_shard_manifest.json
+2026-07-03 16:04:23 | INFO     | Saving preprocessing artifacts to graph\output\preprocessing_artifacts.pkl
+2026-07-03 16:04:23 | INFO     | Save complete
+2026-07-03 16:04:23 | INFO     | ==============================================================================
+2026-07-03 16:04:23 | INFO     | BUILD SUMMARY
+2026-07-03 16:04:23 | INFO     |   Users:                          1,000
+2026-07-03 16:04:23 | INFO     |   Departments:                    23
+2026-07-03 16:04:23 | INFO     |   Roles:                          42
+2026-07-03 16:04:23 | INFO     |   Teams:                          39
+2026-07-03 16:04:23 | INFO     |   Business units:                 1
+2026-07-03 16:04:23 | INFO     |   PCs:                            1,003
+2026-07-03 16:04:23 | INFO     |   Website domains:                475
+2026-07-03 16:04:23 | INFO     |   File extensions:                6
+2026-07-03 16:04:23 | INFO     |   Total event rows read:          98,112,498
+2026-07-03 16:04:23 | INFO     |   Skipped (unmapped event_type):  7,889,100
+2026-07-03 16:04:23 | INFO     |   Dropped (unknown user_id):      0
+2026-07-03 16:04:23 | INFO     |   Invalid/unparseable timestamps: 0 (coerced to epoch 0)
+2026-07-03 16:04:23 | INFO     |   Total shards written:           193
+2026-07-03 16:04:23 | INFO     |   Edges User__accesses__PC: 3,779,634 across 14 shard(s)
+2026-07-03 16:04:23 | INFO     |   Edges User__touches__FileExtension: 1,336,743 across 6 shard(s)
+2026-07-03 16:04:23 | INFO     |   Edges User__visits__WebsiteDomain: 85,107,021 across 173 shard(s)
+2026-07-03 16:04:23 | INFO     |   Skeleton validation passed:      True
+2026-07-03 16:04:23 | INFO     |   Shard validation passed:         True
+2026-07-03 16:04:23 | INFO     |   Total build time:                225.0s
+2026-07-03 16:04:23 | INFO     |   Skeleton graph saved to:         graph\output\node_graph_skeleton.pt
+2026-07-03 16:04:23 | INFO     |   Shard manifest saved to:         graph\output\edge_shard_manifest.json
+2026-07-03 16:04:23 | INFO     |   Artifacts saved to:              graph\output\preprocessing_artifacts.pkl
+2026-07-03 16:04:23 | INFO     | ==============================================================================

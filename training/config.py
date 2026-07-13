@@ -42,6 +42,19 @@ class TrainingConfig:
         loss: One of {"bce", "bce_logits", "focal"}.
         focal_alpha: Alpha term used only when ``loss == "focal"``.
         focal_gamma: Gamma term used only when ``loss == "focal"``.
+        max_pos_weight: Upper bound for positive-class weighting. CERT r4.2
+            has only two positive users, so the raw neg/pos ratio can force
+            every prediction positive if used directly.
+        calibrate_weighted_logits: If true, subtract log(pos_weight) from
+            logits before converting weighted-BCE outputs to probabilities.
+        threshold_min: Lower bound for selected classification thresholds.
+        threshold_max_pred_positive_rate: Maximum validation positive
+            prediction rate allowed during threshold search.
+        threshold_min_recall: Preferred minimum recall during constrained
+            threshold search.
+        threshold_min_validation_positives: Below this many validation
+            positives, F1 threshold tuning is considered statistically
+            unstable and falls back to rate-constrained thresholding.
         patience: Number of epochs with no F1 improvement before early
             stopping triggers.
         min_delta: Minimum F1 improvement to reset the early-stopping
@@ -65,11 +78,12 @@ class TrainingConfig:
     """
 
     # --- Data locations -------------------------------------------------
-    graph_path: str = os.path.join("data", "graph", "production_graph.pt")
-    edge_shard_dir: str = os.path.join("data", "edge_shards")
-    labels_dir: str = os.path.join("data", "labels")
+    # Paths relative to training/ directory (will be resolved in __post_init__)
+    graph_path: str = "graph/output/node_graph_skeleton.pt"
+    edge_shard_dir: str = "graph/output/edge_feature_shards"
+    labels_dir: str = "data/labels"
     checkpoint_dir: str = "checkpoints"
-    log_dir: str = os.path.join("runs", "insider_threat_tgn_gat_mlp")
+    log_dir: str = "runs/insider_threat_tgn_gat_mlp"
 
     # --- Optimization -----------------------------------------------------
     batch_size: int = 32
@@ -81,6 +95,12 @@ class TrainingConfig:
     loss: str = "bce_logits"
     focal_alpha: float = 0.25
     focal_gamma: float = 2.0
+    max_pos_weight: float = 20.0
+    calibrate_weighted_logits: bool = True
+    threshold_min: float = 0.005001
+    threshold_max_pred_positive_rate: float = 0.01
+    threshold_min_recall: float = 0.80
+    threshold_min_validation_positives: int = 3
 
     # --- Regularization / stability --------------------------------------
     patience: int = 10
@@ -109,6 +129,24 @@ class TrainingConfig:
 
     # --- Logging ------------------------------------------------------
     log_every_n_shards: int = 10
+
+    def __post_init__(self) -> None:
+        """Resolve all paths relative to the project root (parent of training/)."""
+        # Get the project root (parent of the training/ directory)
+        training_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(training_dir)
+        
+        # Resolve all paths relative to project root
+        if not os.path.isabs(self.graph_path):
+            self.graph_path = os.path.join(project_root, self.graph_path)
+        if not os.path.isabs(self.edge_shard_dir):
+            self.edge_shard_dir = os.path.join(project_root, self.edge_shard_dir)
+        if not os.path.isabs(self.labels_dir):
+            self.labels_dir = os.path.join(project_root, self.labels_dir)
+        if not os.path.isabs(self.checkpoint_dir):
+            self.checkpoint_dir = os.path.join(project_root, self.checkpoint_dir)
+        if not os.path.isabs(self.log_dir):
+            self.log_dir = os.path.join(project_root, self.log_dir)
 
     def validate(self) -> None:
         """Raise ``ValueError`` if the configuration is internally inconsistent."""
@@ -141,12 +179,22 @@ class TrainingConfig:
                 "train_split + val_split + test_split must sum to 1.0, "
                 f"got {splits_sum:.6f}."
             )
-        if self.epochs <= 0:
-            raise ValueError("epochs must be a positive integer.")
+        if self.epochs < 0:
+            raise ValueError("epochs must be a non-negative integer.")
         if self.batch_size <= 0:
             raise ValueError("batch_size must be a positive integer.")
         if self.patience <= 0:
             raise ValueError("patience must be a positive integer.")
+        if self.max_pos_weight < 1.0:
+            raise ValueError("max_pos_weight must be >= 1.0.")
+        if not 0.0 < self.threshold_min < 1.0:
+            raise ValueError("threshold_min must be in (0, 1).")
+        if not 0.0 < self.threshold_max_pred_positive_rate <= 1.0:
+            raise ValueError("threshold_max_pred_positive_rate must be in (0, 1].")
+        if not 0.0 <= self.threshold_min_recall <= 1.0:
+            raise ValueError("threshold_min_recall must be in [0, 1].")
+        if self.threshold_min_validation_positives < 1:
+            raise ValueError("threshold_min_validation_positives must be >= 1.")
 
     def to_dict(self) -> dict:
         """Return a plain-dict representation for logging/serialization."""

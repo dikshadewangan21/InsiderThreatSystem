@@ -1335,3 +1335,14 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+# ============================================================================
+# Production graph loader for training integration
+# ============================================================================
+
+def load_production_graph(path: str) -> Any:
+    """Load the production graph from a file path.
+    
+    This function is called by training/train.py to load the graph
+    without hardcoding specific class names or methods.
+    """
+    return torch.load(path, weights_only=False)

@@ -8,8 +8,9 @@ __pycache__/
 .venv/
 venv/
 
-# Models
-models/
+# Checkpoints
+checkpoints/*.pt
+!checkpoints/best_model.pt
 *.pkl
 *.joblib
 
@@ -21,6 +22,12 @@ graph/output/
 
 # PyTorch files
 *.pt
+!checkpoints/best_model.pt
 
 # Logs
 *.log
+runs/
+
+# Generated alerts
+alerts/alerts.csv
+alerts/alerts.json
