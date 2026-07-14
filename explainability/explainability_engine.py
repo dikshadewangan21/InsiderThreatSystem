@@ -39,7 +39,7 @@ class ExplainabilityEngine:
         confidence = alert.confidence
         
         # 1. Compute Feature Importance & Extract Raw Values
-        importance_dict, raw_features_dict = get_saliency_importance(self.risk_engine, event)
+        importance_dict, raw_features_dict, attn_weight = get_saliency_importance(self.risk_engine, event)
         
         # 2. Sort Features by Saliency Importance and extract Top 5
         sorted_features = sorted(importance_dict.items(), key=lambda item: item[1], reverse=True)
@@ -72,6 +72,59 @@ class ExplainabilityEngine:
                 "description": f"{reason_text} (SOC priority: {norm_score:.1%})"
             })
             
+        # 2.5 Compute Top Influential Neighbors
+        neighbors = []
+        resource = event.get("resource", "unknown")
+        event_type = event.get("event_type", "unknown")
+        
+        # Get relation name and destination type dynamically
+        from alerts.risk_engine import EVENT_TYPE_TO_RELATION, TEMPORAL_RELATION_NAME
+        relation = EVENT_TYPE_TO_RELATION.get(event_type.lower())
+        if relation is not None:
+            src_node_type, dst_node_type = relation
+            relation_name = TEMPORAL_RELATION_NAME[relation]
+            
+            neighbors.append({
+                "neighbor_id": str(resource),
+                "node_type": str(dst_node_type),
+                "relation": str(relation_name),
+                "influence_score": float(attn_weight),
+                "description": f"Active target resource accessed during session (Neural Attention: {attn_weight:.1%})"
+            })
+            
+        # Static LDAP relationships (Structural neighbors)
+        lookups = self.risk_engine.lookups
+        if hasattr(lookups, "uid_to_dept") and user_id in lookups.uid_to_dept:
+            dept = lookups.uid_to_dept[user_id]
+            if dept and dept != "unknown":
+                neighbors.append({
+                    "neighbor_id": str(dept),
+                    "node_type": "Department",
+                    "relation": "belongs_to",
+                    "influence_score": 0.15,
+                    "description": "User organizational department group (Static Influence: 15.0%)"
+                })
+        if hasattr(lookups, "uid_to_role") and user_id in lookups.uid_to_role:
+            role = lookups.uid_to_role[user_id]
+            if role and role != "unknown":
+                neighbors.append({
+                    "neighbor_id": str(role),
+                    "node_type": "Role",
+                    "relation": "has_role",
+                    "influence_score": 0.10,
+                    "description": "User organizational role assignment (Static Influence: 10.0%)"
+                })
+        if hasattr(lookups, "uid_to_team") and user_id in lookups.uid_to_team:
+            team = lookups.uid_to_team[user_id]
+            if team and team != "unknown":
+                neighbors.append({
+                    "neighbor_id": str(team),
+                    "node_type": "Team",
+                    "relation": "member_of",
+                    "influence_score": 0.05,
+                    "description": "User team assignment group (Static Influence: 5.0%)"
+                })
+
         # 3. Compile Analyst Summary
         import numpy as np
         # Scaled threat score (0-100 scale) to represent risk index consistently
@@ -126,6 +179,7 @@ class ExplainabilityEngine:
             risk_level=risk_level,
             confidence=confidence,
             top_factors=top_factors,
+            top_influential_neighbors=neighbors,
             feature_values=feature_values_subset,
             analyst_summary=summary,
             recommended_action=recommended_action_str
@@ -185,6 +239,7 @@ def run_self_test() -> bool:
         assert explanation.risk_score == 0.0023
         assert explanation.risk_level == "High"
         assert len(explanation.top_factors) == 5
+        assert len(explanation.top_influential_neighbors) > 0
         assert len(explanation.analyst_summary) > 0
         assert len(explanation.recommended_action) > 0
         

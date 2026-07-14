@@ -667,6 +667,35 @@ def finalize_scores(accumulator: FileAccumulator, department_data_available: boo
     return df[OUTPUT_COLUMNS]
 
 
+def finalize_user_scores(accumulator: FileAccumulator, result_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Invert the filename->users mapping to compute user-level sensitivity aggregates.
+    """
+    log.info("Aggregating sensitivity scores to user level ...")
+    file_to_score = dict(zip(result_df["filename"], result_df["SensitivityScore"]))
+    
+    user_scores = defaultdict(list)
+    for filename, users in accumulator.user_set.items():
+        score = file_to_score.get(filename, 0.0)
+        for user in users:
+            if user:
+                user_scores[user].append(score)
+                
+    user_rows = []
+    for user, scores in user_scores.items():
+        user_rows.append({
+            "user_id": user,
+            "AverageSensitivity": float(np.mean(scores)),
+            "MaxSensitivity": float(np.max(scores)),
+            "SensitiveFileCount": float(len(scores)),
+        })
+        
+    user_df = pd.DataFrame(user_rows)
+    if len(user_df) == 0:
+        user_df = pd.DataFrame(columns=["user_id", "AverageSensitivity", "MaxSensitivity", "SensitiveFileCount"])
+    return user_df
+
+
 # =========================================================
 # STEP 5 — VALIDATION
 # =========================================================
@@ -742,6 +771,12 @@ def main() -> None:
     log_banner("STAGE 5 — SAVING OUTPUT")
     result_df.to_csv(OUTPUT_PATH, index=False)
     log.info(f"  Saved {OUTPUT_PATH}")
+    
+    user_result_df = finalize_user_scores(accumulator, result_df)
+    user_output_path = PROCESSED_DIR / "user_sensitivity.csv"
+    user_result_df.to_csv(user_output_path, index=False)
+    log.info(f"  Saved user-level sensitivity to {user_output_path}")
+    
     mem_tracker.sample()
 
     elapsed = time.time() - start_time

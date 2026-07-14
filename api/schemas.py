@@ -23,11 +23,19 @@ class AlertFactorResponse(BaseModel):
     raw_value: float
     description: str
 
+class AlertNeighborResponse(BaseModel):
+    neighbor_id: str
+    node_type: str
+    relation: str
+    influence_score: float
+    description: str
+
 class AlertExplanationResponse(BaseModel):
     risk_score: float
     risk_level: str
     confidence: float
     top_factors: List[AlertFactorResponse]
+    top_influential_neighbors: List[AlertNeighborResponse]
     feature_values: Dict[str, float]
     analyst_summary: str
     recommended_action: str

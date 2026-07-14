@@ -14,6 +14,7 @@ class Explanation:
     risk_level: str
     confidence: float
     top_factors: List[Dict[str, Any]]  # List containing keys: factor, score, description
+    top_influential_neighbors: List[Dict[str, Any]]  # List containing keys: neighbor_id, node_type, relation, score, description
     feature_values: Dict[str, float]  # Mapped raw feature values
     analyst_summary: str
     recommended_action: str

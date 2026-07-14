@@ -53,7 +53,7 @@ def _configure_logging(level: str = "INFO") -> logging.Logger:
 
     logging.basicConfig(
         level=numeric_level,
-        format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+        format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         handlers=[logging.StreamHandler(sys.stdout)],
     )
@@ -138,12 +138,12 @@ def _safe_read_csv(
         else:
             df = pd.read_csv(path, dtype=dtype, low_memory=False)
     except pd.errors.EmptyDataError:
-        log.warning("File %s is empty — returning empty DataFrame.", path.name)
+        log.warning("File %s is empty - returning empty DataFrame.", path.name)
         return pd.DataFrame()
     except pd.errors.ParserError as exc:
         raise ValueError(f"Failed to parse {path}: {exc}") from exc
 
-    log.debug("  → %d rows × %d cols loaded from %s", *df.shape, path.name)
+    log.debug("  -> %d rows x %d cols loaded from %s", *df.shape, path.name)
     return df
 
 
@@ -194,11 +194,11 @@ def _normalize_user_id(df: pd.DataFrame, alias_map: dict[str, str]) -> pd.DataFr
     """
     df = df.copy()
 
-    # Rename alias → canonical only when the canonical name is absent.
+    # Rename alias -> canonical only when the canonical name is absent.
     if USER_ID_COL not in df.columns:
         for alias, canonical in alias_map.items():
             if alias in df.columns:
-                log.debug("  Renaming column '%s' → '%s'.", alias, canonical)
+                log.debug("  Renaming column '%s' -> '%s'.", alias, canonical)
                 df = df.rename(columns={alias: canonical})
                 break
 
@@ -297,7 +297,7 @@ def _aggregate_sensitivity(
     )
 
     log.debug(
-        "  → Sensitivity aggregated: %d unique users, columns %s",
+        "  -> Sensitivity aggregated: %d unique users, columns %s",
         len(agg),
         agg.columns.tolist(),
     )
@@ -311,8 +311,8 @@ def _aggregate_sensitivity(
 def _fill_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     """
     Fill missing values by dtype:
-      - Numeric columns  → 0
-      - Object/category  → "Unknown"
+      - Numeric columns  -> 0
+      - Object/category  -> "Unknown"
 
     Parameters
     ----------
@@ -356,7 +356,7 @@ def _print_summary(df: pd.DataFrame) -> None:
     Covers: shape, missing values, duplicate user count, memory usage,
     feature names, and the first 10 rows.
     """
-    sep = "─" * 72
+    sep = "-" * 72
 
     print(f"\n{sep}")
     print("FINAL DATASET SUMMARY")
@@ -427,7 +427,7 @@ def run_pipeline(
 
     df_behavior    = _safe_read_csv(behavior_path,    chunksize=chunksize)
     df_psychology  = _safe_read_csv(psychology_path,  chunksize=chunksize)
-    # df_sensitivity = _safe_read_csv(sensitivity_path, chunksize=chunksize)
+    df_sensitivity = _safe_read_csv(sensitivity_path, chunksize=chunksize)
     df_ldap        = _safe_read_csv(ldap_path,        chunksize=chunksize)
     df_psychometric = _safe_read_csv(psychometric_path, chunksize=chunksize)
 
@@ -441,7 +441,7 @@ def run_pipeline(
         "psychology":   df_psychology,
         "ldap":         df_ldap,
         "psychometric": df_psychometric,
-        # "sensitivity":  df_sensitivity,
+        "sensitivity":  df_sensitivity,
     }
     for name, df in sources.items():
         _validate_columns(df, name, REQUIRED_COLUMNS[name])
@@ -453,7 +453,7 @@ def run_pipeline(
 
     df_behavior     = _normalize_user_id(df_behavior,     alias_map)
     df_psychology   = _normalize_user_id(df_psychology,   alias_map)
-    # df_sensitivity  = _normalize_user_id(df_sensitivity,  alias_map)
+    df_sensitivity  = _normalize_user_id(df_sensitivity,  alias_map)
     df_ldap         = _normalize_user_id(df_ldap,         alias_map)
     df_psychometric = _normalize_user_id(df_psychometric, alias_map)
 
@@ -464,14 +464,13 @@ def run_pipeline(
 
     df_behavior     = _drop_duplicate_users(df_behavior,     "behavior")
     df_psychology   = _drop_duplicate_users(df_psychology,   "psychology")
+    df_sensitivity  = _drop_duplicate_users(df_sensitivity,  "sensitivity")
     df_ldap         = _drop_duplicate_users(df_ldap,         "ldap")
     df_psychometric = _drop_duplicate_users(df_psychometric, "psychometric")
 
     # ------------------------------------------------------------------
-    # 5. Aggregate file sensitivity → user level
+    # 5. Aggregate file sensitivity → user level (Skipped, pre-aggregated)
     # ------------------------------------------------------------------
-    # log.info("=== STEP 5: Aggregating file sensitivity ===")
-    # df_sensitivity_agg = _aggregate_sensitivity(df_sensitivity, sensitivity_col)
 
     # ------------------------------------------------------------------
     # 6. Merge all sources
@@ -484,7 +483,7 @@ def run_pipeline(
         ("psychology",   df_psychology),
         ("ldap",         df_ldap),
         ("psychometric", df_psychometric),
-        # ("sensitivity",  df_sensitivity_agg),
+        ("sensitivity",  df_sensitivity),
     ]
 
     for label, df_right in merge_sources:
@@ -503,7 +502,7 @@ def run_pipeline(
 
         merged = merged.merge(df_right, on=USER_ID_COL, how="left", suffixes=("", f"_{label}"))
         log.info(
-            "  Merged [%s]: %d → %d rows (expected no change on left join).",
+            "  Merged [%s]: %d -> %d rows (expected no change on left join).",
             label,
             n_before,
             len(merged),
@@ -511,7 +510,7 @@ def run_pipeline(
 
         if len(merged) != n_before:
             log.error(
-                "[%s] Row count changed after left join (%d → %d). "
+                "[%s] Row count changed after left join (%d -> %d). "
                 "Check for duplicate user_ids in the right table.",
                 label,
                 n_before,
@@ -533,7 +532,7 @@ def run_pipeline(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     merged.to_csv(output_path, index=False)
-    log.info("Saved final dataset → %s", output_path)
+    log.info("Saved final dataset -> %s", output_path)
 
     # ------------------------------------------------------------------
     # 9. Print summary
@@ -571,8 +570,8 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--sensitivity",
         type=Path,
-        default=Path("data/processed/file_sensitivity.csv"),
-        help="Path to file_sensitivity.csv (filename-level granularity)",
+        default=Path("data/processed/user_sensitivity.csv"),
+        help="Path to user_sensitivity.csv (aggregated user-level file sensitivity)",
     )
     parser.add_argument(
         "--ldap",
@@ -647,7 +646,7 @@ def main() -> None:
     global log
     log = _configure_logging(args.log_level)
 
-    log.info("Feature Fusion Pipeline — starting")
+    log.info("Feature Fusion Pipeline - starting")
     log.debug("Arguments: %s", vars(args))
 
     try:
@@ -681,7 +680,7 @@ def main() -> None:
         log.exception("Unexpected error: %s", exc)
         sys.exit(2)
 
-    log.info("Feature Fusion Pipeline — complete.")
+    log.info("Feature Fusion Pipeline - complete.")
 
 
 if __name__ == "__main__":

@@ -33,14 +33,14 @@ def get_saliency_importance(
         
         relation = EVENT_TYPE_TO_RELATION.get(event_type)
         if relation is None:
-            return {}, {}
+            return {}, {}, 1.0
             
         src_node_type, dst_node_type = relation
         relation_name = TEMPORAL_RELATION_NAME[relation]
         
         user_idx = risk_engine.uid_to_index.get(user_id)
         if user_idx is None:
-            return {}, {}
+            return {}, {}, 1.0
             
         if dst_node_type == "PC":
             dst_idx = risk_engine.pc_registry.get(resource, 0)
@@ -185,11 +185,11 @@ def get_saliency_importance(
             if edge_weight is None:
                 edge_weight = torch.ones(local_edge_index.size(1), dtype=torch.float32, device=risk_engine.device)
                 
-            contextual_embeddings, _ = risk_engine.gat(node_embeddings, local_edge_index, edge_weight)
+            contextual_embeddings, alpha = risk_engine.gat(node_embeddings, local_edge_index, edge_weight)
             
             src_pos = (touched_ids == src_global).nonzero(as_tuple=True)[0]
             if len(src_pos) == 0:
-                return _fallback_importance(raw_features_dict), raw_features_dict
+                return _fallback_importance(raw_features_dict), raw_features_dict, 1.0
             src_pos = src_pos[0].item()
             user_embedding = contextual_embeddings[src_pos].unsqueeze(0)
             
@@ -208,7 +208,8 @@ def get_saliency_importance(
             saliency = saliency / sum_sal
             
         importance_dict = {name: float(saliency[idx]) for idx, name in enumerate(FEATURE_NAMES)}
-        return importance_dict, raw_features_dict
+        attn_weight = float(alpha.mean().item()) if alpha is not None else 1.0
+        return importance_dict, raw_features_dict, attn_weight
         
     except Exception as e:
         logger.warning(f"Saliency gradient computation failed ({e}). Falling back to value-deviation heuristic.")
@@ -225,7 +226,7 @@ def get_saliency_importance(
                     raw_feat_fallback["login_frequency"] = float(risk_engine.lookups.user_login_freq[user_idx])
             except Exception:
                 pass
-        return _fallback_importance(raw_feat_fallback), raw_feat_fallback
+        return _fallback_importance(raw_feat_fallback), raw_feat_fallback, 1.0
 
 def _fallback_importance(raw_features: Dict[str, float]) -> Dict[str, float]:
     """Fallback heuristic importance based on raw feature deviation."""
