@@ -94,7 +94,7 @@ class TrainingConfig:
     scheduler: str = "cosine"
     loss: str = "bce_logits"
     focal_alpha: float = 0.25
-    focal_gamma: float = 2.0
+    focal_gamma: float = 3.0
     max_pos_weight: float = 20.0
     calibrate_weighted_logits: bool = True
     threshold_min: float = 0.005001
