@@ -98,9 +98,9 @@ class TrainingConfig:
     max_pos_weight: float = 20.0
     calibrate_weighted_logits: bool = True
     threshold_min: float = 0.005001
-    threshold_max_pred_positive_rate: float = 0.01
+    threshold_max_pred_positive_rate: float = 0.007
     threshold_min_recall: float = 0.80
-    threshold_min_validation_positives: int = 3
+    threshold_min_validation_positives: int = 1
 
     # --- Regularization / stability --------------------------------------
     patience: int = 10
