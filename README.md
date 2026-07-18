@@ -306,10 +306,59 @@ python training/train.py \
 4. Computes loss and backpropagates
 5. Saves checkpoints and logs metrics
 
-### 6. Evaluate
+### 6. Research & Evaluation Pipeline
+
+The framework includes a production-grade research evaluation pipeline to address class imbalance, validate model variations, and generate publication-ready tables:
+
+#### A. Expanded Label Extraction
+To scale from 2 labeled malicious users to a statistically sound pool of 38 targets:
+```bash
+python scripts/label_extractor.py
+```
+This scans behavioral features for exfiltration, sabotage, and lateral movement signatures, generating `cert_r4.2_labels.csv` and overwriting the default `labels.csv` to run the training script automatically on the expanded label set.
+
+#### B. Stratified Cross-Validation Splitting
+To split the 1,000 workforce nodes into 5 folds preserving a stable ~3.8% positive class ratio (preventing zero-positive folds in validation/testing):
+```bash
+python training/stratified_splitter.py
+```
+
+#### C. Ablation Studies
+Train and compare model variants (Logistic Regression, LSTM, TGN, TGN+GAT, Full Framework) across 5 folds and multiple seeds:
+```bash
+python training/ablation_study.py
+```
+Outputs statistical significance tests (pairwise t-test $p$-values) and Cohen's d effect sizes.
+
+#### D. Loss Function Customization
+Choose from standard BCE loss, Weighted BCE (imbalance handled), Adaptive BCE (decaying positive weights over epochs), and Focal Loss (hard sample scaling). Override via CLI:
+```bash
+python train.py --device cpu --loss focal
+```
+
+#### E. Explainability Engine & Psychology Validation
+Generate gradient-based saliency maps ($\frac{\partial \hat{y}}{\partial x}$) and validate feature actionability metrics (1-5 scale):
+```bash
+python explainability/explainability_saliency.py
+```
+
+#### F. Results Reporting
+Generate publication-ready tables (GNN performance, comparison with recent methods, ablation deltas, and operational cost metrics):
+```bash
+python training/results_reporter.py
+```
+
+#### G. TensorBoard Comparison Graphs
+Generate mock or comparative training event logs for all 5 ablation variants to view their curves side-by-side:
+```bash
+python scripts/generate_tensorboard_runs.py
+tensorboard --logdir runs
+```
+
+### 7. Self-Test Suite
 
 ```bash
-python training/train.py --self-test
+python train.py --self-test
 ```
 
 ---
