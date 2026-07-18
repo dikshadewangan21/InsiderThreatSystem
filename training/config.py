@@ -11,6 +11,7 @@ Namespace, or from a JSON/YAML file on disk via ``TrainingConfig.load``.
 
 from __future__ import annotations
 
+from typing import Optional
 import json
 import os
 from dataclasses import asdict, dataclass
@@ -111,6 +112,7 @@ class TrainingConfig:
     device: str = "auto"
     num_workers: int = 4
     seed: int = 42
+    max_shards: Optional[int] = None
 
     # --- Data splits --------------------------------------------------
     train_split: float = 0.7

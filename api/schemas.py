@@ -39,6 +39,10 @@ class AlertExplanationResponse(BaseModel):
     feature_values: Dict[str, float]
     analyst_summary: str
     recommended_action: str
+    top_behavioral_feature: Optional[Dict[str, Any]] = None
+    top_psychological_feature: Optional[Dict[str, Any]] = None
+    top_file_sensitivity_feature: Optional[Dict[str, Any]] = None
+    top_graph_relationship: Optional[Dict[str, Any]] = None
 
 class PredictResponse(BaseModel):
     risk_score: float

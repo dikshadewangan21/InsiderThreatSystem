@@ -49,6 +49,16 @@ def test_event(name, event_data):
         print(exp["analyst_summary"])
         print("\nRECOMMENDED ACTIONS:")
         print(exp["recommended_action"])
+        
+        print("\nCATEGORIZED EXPLAINABILITY FIELDS:")
+        if exp.get("top_behavioral_feature"):
+            print(f"  Top Behavioral      : {exp['top_behavioral_feature']['display_name']} (Score: {exp['top_behavioral_feature']['importance_score']:.4f})")
+        if exp.get("top_psychological_feature"):
+            print(f"  Top Psychological   : {exp['top_psychological_feature']['display_name']} (Score: {exp['top_psychological_feature']['importance_score']:.4f})")
+        if exp.get("top_file_sensitivity_feature"):
+            print(f"  Top File Sensitivity: {exp['top_file_sensitivity_feature']['display_name']} (Score: {exp['top_file_sensitivity_feature']['importance_score']:.4f})")
+        if exp.get("top_graph_relationship"):
+            print(f"  Top Graph Relation  : {exp['top_graph_relationship']['neighbor_id']} ({exp['top_graph_relationship']['node_type']}) - {exp['top_graph_relationship']['description']}")
         print("=" * 70 + "\n")
         
     except Exception as e:

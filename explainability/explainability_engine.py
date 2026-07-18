@@ -30,6 +30,15 @@ class ExplainabilityEngine:
     def __init__(self, config: ExplainabilityConfig, risk_engine: RiskEngine) -> None:
         self.config = config
         self.risk_engine = risk_engine
+
+    def _categorize_feature(self, name: str) -> str:
+        name_lower = name.lower()
+        if "file" in name_lower or "extension" in name_lower or "sensitive" in name_lower:
+            return "File Sensitivity"
+        elif any(k in name_lower for k in ["psych", "score_o", "score_c", "score_e", "score_a", "score_n", "dev_o", "dev_c", "dev_e", "dev_a", "dev_n", "psychology", "neurot", "agree", "consc", "extraversion", "openness"]):
+            return "Psychological"
+        else:
+            return "Behavioral"
         
     def explain_alert(self, alert: Alert, event: Dict[str, Any]) -> Explanation:
         """Analyze an Alert and its raw event to generate a detailed Explanation."""
@@ -45,6 +54,62 @@ class ExplainabilityEngine:
         sorted_features = sorted(importance_dict.items(), key=lambda item: item[1], reverse=True)
         top_5_raw = sorted_features[:5]
         
+        # Categorized features extraction
+        top_behavioral = None
+        top_psychological = None
+        top_file_sensitivity = None
+        
+        for name, score in sorted_features:
+            display_name = self.config.feature_display_names.get(name, name)
+            reason_text = self.config.feature_reason_mapping.get(
+                name, f"Elevated {display_name.lower()}"
+            )
+            raw_val = raw_features_dict.get(name, 0.0)
+            
+            feat_info = {
+                "feature": name,
+                "display_name": display_name,
+                "importance_score": float(score),
+                "raw_value": float(raw_val),
+                "description": f"{reason_text} (Score: {score:.4f})"
+            }
+            
+            category = self._categorize_feature(name)
+            if category == "Behavioral" and top_behavioral is None:
+                top_behavioral = feat_info
+            elif category == "Psychological" and top_psychological is None:
+                top_psychological = feat_info
+            elif category == "File Sensitivity" and top_file_sensitivity is None:
+                top_file_sensitivity = feat_info
+                
+            if top_behavioral and top_psychological and top_file_sensitivity:
+                break
+                
+        if top_behavioral is None:
+            top_behavioral = {
+                "feature": "none",
+                "display_name": "None Detected",
+                "importance_score": 0.0,
+                "raw_value": 0.0,
+                "description": "No behavioral features detected in this event"
+            }
+        if top_psychological is None:
+            top_psychological = {
+                "feature": "none",
+                "display_name": "None Detected",
+                "importance_score": 0.0,
+                "raw_value": 0.0,
+                "description": "No psychological features detected in this event"
+            }
+        if top_file_sensitivity is None:
+            top_file_sensitivity = {
+                "feature": "none",
+                "display_name": "None Detected",
+                "importance_score": 0.0,
+                "raw_value": 0.0,
+                "description": "No file sensitivity features detected in this event"
+            }
+        
         # Normalize the top 5 scores so they sum to 100% (1.0)
         top_5_sum = sum(score for name, score in top_5_raw)
         normalized_top_5 = []
@@ -59,7 +124,6 @@ class ExplainabilityEngine:
             raw_val = raw_features_dict.get(name, 0.0)
             feature_values_subset[name] = raw_val
             
-            # Map raw feature name to human-readable display name and reason text
             display_name = self.config.feature_display_names.get(name, name)
             reason_text = self.config.feature_reason_mapping.get(
                 name, f"Elevated {display_name.lower()}"
@@ -125,6 +189,20 @@ class ExplainabilityEngine:
                     "description": "User team assignment group (Static Influence: 5.0%)"
                 })
 
+        # Top graph relationship selection
+        top_graph_relationship = None
+        if neighbors:
+            sorted_neighbors = sorted(neighbors, key=lambda n: n.get("influence_score", 0.0), reverse=True)
+            top_graph_relationship = sorted_neighbors[0]
+        else:
+            top_graph_relationship = {
+                "neighbor_id": "none",
+                "node_type": "None Detected",
+                "relation": "none",
+                "influence_score": 0.0,
+                "description": "No graph relationships detected in this event"
+            }
+
         # 3. Compile Analyst Summary
         import numpy as np
         # Scaled threat score (0-100 scale) to represent risk index consistently
@@ -148,10 +226,8 @@ class ExplainabilityEngine:
         else:
             actions.append("ALERT RESPONSE: Flag user account for continuous session logging and queue for immediate supervisor review.")
             
-        # Add feature-specific actionable recommendations based on top factors
         for name, norm_score in normalized_top_5:
             raw_val = raw_features_dict.get(name, 0.0)
-            # Suggest if the feature has a non-trivial value
             if raw_val > 0.1:
                 if name in ("is_after_hours", "weekend_flag", "after_hours_score"):
                     actions.append("Audit active directory logs to verify if a manager authorized off-hours login windows.")
@@ -164,7 +240,6 @@ class ExplainabilityEngine:
                 elif name in ("psychology_score", "behavior_deviation"):
                     actions.append("Coordinate a behavioral risk evaluation with HR and the security supervisor.")
                     
-        # Deduplicate actions
         seen = set()
         unique_actions = []
         for action in actions:
@@ -182,7 +257,11 @@ class ExplainabilityEngine:
             top_influential_neighbors=neighbors,
             feature_values=feature_values_subset,
             analyst_summary=summary,
-            recommended_action=recommended_action_str
+            recommended_action=recommended_action_str,
+            top_behavioral_feature=top_behavioral,
+            top_psychological_feature=top_psychological,
+            top_file_sensitivity_feature=top_file_sensitivity,
+            top_graph_relationship=top_graph_relationship
         )
 
 def run_self_test() -> bool:

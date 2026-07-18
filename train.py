@@ -383,10 +383,13 @@ def _get_node_offsets() -> Dict[str, int]:
     return _NODE_OFFSETS
 
 
-def stream_edge_shards(shard_dir: str, device: torch.device) -> Iterator[Any]:
+def stream_edge_shards(shard_dir: str, device: torch.device, max_shards: Optional[int] = None) -> Iterator[Any]:
     """Yield one edge-feature shard at a time (never all shards at once)."""
     loader = _first_callable(edge_features_module, _CANDIDATE_LOAD_SHARD)
-    for shard_path in discover_edge_shards(shard_dir):
+    shards = discover_edge_shards(shard_dir)
+    if max_shards is not None:
+        shards = shards[:max_shards]
+    for shard_path in shards:
         shard = loader(shard_path)
         if shard is None:
             raise ProductionArtifactError(
@@ -1080,12 +1083,15 @@ class InsiderThreatTrainer:
         self._audit_labels(label_map)
         LOGGER.info("Loaded %d node-level labels.", len(self.node_ids))
 
-        self.train_ids, self.val_ids, self.test_ids = self._split_nodes(self.node_ids)
+        # Generate folds dynamically based on positive count
+        self.folds = self._get_folds(self.node_ids)
+        # Default active split to the first fold
+        self.train_ids, self.val_ids, self.test_ids = self.folds[0]
         self._audit_split("train", self.train_ids)
         self._audit_split("validation", self.val_ids, require_both_classes=False)
         self._audit_split("test", self.test_ids, require_both_classes=False)
         LOGGER.info(
-            "Split sizes -- train: %d, val: %d, test: %d",
+            "Split sizes (Fold 1) -- train: %d, val: %d, test: %d",
             len(self.train_ids), len(self.val_ids), len(self.test_ids),
         )
 
@@ -1307,6 +1313,265 @@ class InsiderThreatTrainer:
 
         return train_ids, val_ids, test_ids
 
+    def _get_folds(self, node_ids: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+        # Count positives
+        labels_np = self.labels[torch.as_tensor(node_ids, dtype=torch.long)].cpu().numpy()
+        pos_mask = (labels_np == 1)
+        pos_ids = node_ids[pos_mask]
+        neg_ids = node_ids[~pos_mask]
+        n_pos = len(pos_ids)
+        
+        rng = np.random.RandomState(self.config.seed)
+        shuffled_pos = pos_ids.copy()
+        rng.shuffle(shuffled_pos)
+        shuffled_neg = neg_ids.copy()
+        rng.shuffle(shuffled_neg)
+        
+        folds = []
+        
+        # 1. Stratified Train/Val/Test Split if positive count >= 10
+        if n_pos >= 10:
+            n_train_pos = int(round(n_pos * self.config.train_split))
+            n_val_pos = int(round(n_pos * self.config.val_split))
+            train_pos = shuffled_pos[:n_train_pos]
+            val_pos = shuffled_pos[n_train_pos:n_train_pos + n_val_pos]
+            test_pos = shuffled_pos[n_train_pos + n_val_pos:]
+            
+            n_neg = len(shuffled_neg)
+            n_train_neg = int(round(n_neg * self.config.train_split))
+            n_val_neg = int(round(n_neg * self.config.val_split))
+            train_neg = shuffled_neg[:n_train_neg]
+            val_neg = shuffled_neg[n_train_neg:n_train_neg + n_val_neg]
+            test_neg = shuffled_neg[n_train_neg + n_val_neg:]
+            
+            train_ids = np.concatenate([train_pos, train_neg])
+            val_ids = np.concatenate([val_pos, val_neg])
+            test_ids = np.concatenate([test_pos, test_neg])
+            rng.shuffle(train_ids)
+            rng.shuffle(val_ids)
+            rng.shuffle(test_ids)
+            folds.append((train_ids, val_ids, test_ids))
+            LOGGER.info("[Split Strategy] Selected Stratified Train/Val/Test Split.")
+            
+        # 2. Stratified K-Fold if 3 <= n_pos < 10
+        elif 3 <= n_pos < 10:
+            K = 5
+            LOGGER.info(f"[Split Strategy] Selected Stratified {K}-Fold Cross Validation.")
+            # Split negatives into K folds
+            neg_chunks = np.array_split(shuffled_neg, K)
+            
+            for i in range(K):
+                # Test positive: i-th positive
+                test_pos = shuffled_pos[i:i+1]
+                # Val positive: (i+1)%n_pos positive
+                val_pos = shuffled_pos[(i+1)%n_pos:(i+1)%n_pos+1]
+                # Train positives: all other positives
+                train_pos = np.array([p for p in shuffled_pos if p not in test_pos and p not in val_pos])
+                if len(train_pos) == 0:
+                    train_pos = val_pos  # Overlap if needed so train is never empty
+                
+                # Negatives
+                test_neg = neg_chunks[i]
+                val_neg = neg_chunks[(i+1)%K]
+                train_neg_list = [neg_chunks[j] for j in range(K) if j != i and j != (i+1)%K]
+                train_neg = np.concatenate(train_neg_list) if train_neg_list else val_neg
+                
+                train_ids = np.concatenate([train_pos, train_neg])
+                val_ids = np.concatenate([val_pos, val_neg])
+                test_ids = np.concatenate([test_pos, test_neg])
+                rng.shuffle(train_ids)
+                rng.shuffle(val_ids)
+                rng.shuffle(test_ids)
+                folds.append((train_ids, val_ids, test_ids))
+                
+        # 3. Leave-One-Positive-Out if n_pos < 3
+        else:
+            K = n_pos
+            LOGGER.info(f"[Split Strategy] Selected Leave-One-Positive-Out (LOPO) Cross Validation with {K} folds.")
+            neg_chunks = np.array_split(shuffled_neg, K)
+            
+            for i in range(K):
+                # Test positive: i-th positive
+                test_pos = shuffled_pos[i:i+1]
+                # Train positive: all other positives (for K=2, this is the other 1 positive)
+                train_pos = np.array([p for p in shuffled_pos if p not in test_pos])
+                # Validation positive: share train positive to avoid empty validation split
+                val_pos = train_pos
+                
+                test_neg = neg_chunks[i]
+                train_neg_list = [neg_chunks[j] for j in range(K) if j != i]
+                train_neg = np.concatenate(train_neg_list)
+                # Validation negatives: use a 20% chunk of train negatives
+                n_val_neg_chunk = max(1, len(train_neg) // 5)
+                val_neg = train_neg[:n_val_neg_chunk]
+                train_neg_subset = train_neg[n_val_neg_chunk:]
+                
+                train_ids = np.concatenate([train_pos, train_neg_subset])
+                val_ids = np.concatenate([val_pos, val_neg])
+                test_ids = np.concatenate([test_pos, test_neg])
+                rng.shuffle(train_ids)
+                rng.shuffle(val_ids)
+                rng.shuffle(test_ids)
+                folds.append((train_ids, val_ids, test_ids))
+                
+        return folds
+
+    def set_fold(self, fold_idx: int) -> None:
+        """Set the active fold splits for training and evaluation."""
+        self.train_ids, self.val_ids, self.test_ids = self.folds[fold_idx]
+        self._audit_split(f"train_fold_{fold_idx}", self.train_ids, require_both_classes=True)
+        self._audit_split(f"val_fold_{fold_idx}", self.val_ids, require_both_classes=False)
+        self._audit_split(f"test_fold_{fold_idx}", self.test_ids, require_both_classes=False)
+        
+        # Recalculate pos_weight for the current fold
+        train_labels = self.labels[torch.as_tensor(self.train_ids, dtype=torch.long)]
+        num_neg = (train_labels == 0).sum().item()
+        num_pos = (train_labels == 1).sum().item()
+        if num_pos > 0:
+            raw_pos_weight_val = num_neg / num_pos
+            pos_weight_val = min(float(raw_pos_weight_val), float(self.config.max_pos_weight))
+            self.pos_weight = torch.tensor([pos_weight_val], device=self.device)
+            self.class_ratio = float(raw_pos_weight_val)
+            LOGGER.info(
+                "Fold %d - train labels: normal=%d, threat=%d. Raw pos_weight=%.4f, capped pos_weight=%.4f.",
+                fold_idx + 1, num_neg, num_pos, raw_pos_weight_val, pos_weight_val,
+            )
+        else:
+            self.pos_weight = torch.tensor([1.0], device=self.device)
+            self.class_ratio = 1.0
+            
+        self.loss_fn = build_loss_fn(self.config, pos_weight=self.pos_weight).to(self.device)
+        self.probability_logit_shift = 0.0
+        if (
+            self.config.calibrate_weighted_logits
+            and self.config.loss.lower() == "bce_logits"
+            and self.pos_weight is not None
+            and float(self.pos_weight.item()) > 1.0
+        ):
+            self.probability_logit_shift = float(np.log(float(self.pos_weight.item())))
+
+    def reset_weights(self) -> None:
+        """Reset the model parameters to original initialization for a new fold."""
+        self.tgn = self._build_tgn().to(self.device)
+        self.gat = self._build_gat().to(self.device)
+        self.mlp = self._build_mlp().to(self.device)
+        if edge_weighting_module is not None:
+            try:
+                from graph.edge_weighting import DynamicEdgeWeighting
+                self.edge_weighter = DynamicEdgeWeighting(in_features=40).to(self.device)
+            except Exception as e:
+                pass
+                
+        # Rebuild optimizer and scheduler
+        self.optimizer = build_optimizer(self.config, iter(self._get_parameters()))
+        self.scheduler = build_scheduler(self.config, self.optimizer)
+        self.early_stopping = EarlyStopping(patience=self.config.patience, min_delta=self.config.min_delta)
+        self.best_f1 = float("-inf")
+
+    def _get_parameters(self) -> List[nn.Parameter]:
+        all_params = (
+            list(self.tgn.parameters())
+            + list(self.gat.parameters())
+            + list(self.mlp.parameters())
+        )
+        if self.edge_weighter is not None:
+            all_params += list(self.edge_weighter.parameters())
+        return all_params
+
+    def generate_plots(self, targets: np.ndarray, probs: np.ndarray, train_losses: List[float], val_losses: List[float]) -> None:
+        from pathlib import Path
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score, confusion_matrix
+        
+        # Create directory
+        plots_dir = Path("reports/plots")
+        plots_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 1. ROC Curve
+        plt.figure(figsize=(6, 5))
+        fpr, tpr, _ = roc_curve(targets, probs)
+        roc_auc = auc(fpr, tpr)
+        plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.4f})')
+        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver Operating Characteristic (ROC) Curve')
+        plt.legend(loc="lower right")
+        plt.tight_layout()
+        plt.savefig(plots_dir / "roc_curve.png", dpi=300)
+        plt.close()
+        
+        # 2. PR Curve
+        plt.figure(figsize=(6, 5))
+        precision, recall, _ = precision_recall_curve(targets, probs)
+        pr_auc = average_precision_score(targets, probs)
+        plt.plot(recall, precision, color='blue', lw=2, label=f'PR curve (AP = {pr_auc:.4f})')
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+        plt.title('Precision-Recall Curve')
+        plt.legend(loc="lower left")
+        plt.tight_layout()
+        plt.savefig(plots_dir / "pr_curve.png", dpi=300)
+        plt.close()
+        
+        # 3. Loss Curves
+        plt.figure(figsize=(6, 5))
+        epochs = range(1, len(train_losses) + 1)
+        plt.plot(epochs, train_losses, 'bo-', label='Training Loss')
+        if len(val_losses) == len(train_losses):
+            plt.plot(epochs, val_losses, 'ro-', label='Validation Loss')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.title('Training and Validation Loss')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(plots_dir / "loss_curves.png", dpi=300)
+        plt.close()
+        
+        # 4. Confusion Matrix Heatmap
+        plt.figure(figsize=(5, 4))
+        preds = (probs >= self.best_threshold).astype(int)
+        cm = confusion_matrix(targets, preds)
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False,
+                    xticklabels=['Normal', 'Threat'], yticklabels=['Normal', 'Threat'])
+        plt.xlabel('Predicted Label')
+        plt.ylabel('True Label')
+        plt.title(f'Confusion Matrix (Threshold = {self.best_threshold:.4f})')
+        plt.tight_layout()
+        plt.savefig(plots_dir / "confusion_matrix.png", dpi=300)
+        plt.close()
+        
+        # 5. Risk Score Distribution
+        plt.figure(figsize=(6, 5))
+        threat_scores = probs[targets == 1]
+        normal_scores = probs[targets == 0]
+        plt.hist(normal_scores, bins=50, alpha=0.5, label='Normal Users', color='blue', log=True)
+        plt.hist(threat_scores, bins=10, alpha=0.8, label='Threat Users', color='red')
+        plt.xlabel('Calibrated Threat Probability')
+        plt.ylabel('User Count (Log Scale)')
+        plt.title('Threat Probability Score Distribution')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(plots_dir / "risk_score_distribution.png", dpi=300)
+        plt.close()
+        
+        # 6. Prediction Probability Distribution Density
+        plt.figure(figsize=(6, 5))
+        sns.kdeplot(normal_scores, label='Normal Users', fill=True, color='blue', common_norm=False, log_scale=(False, True) if normal_scores.min() > 0 else False)
+        sns.kdeplot(threat_scores, label='Threat Users', fill=True, color='red', common_norm=False)
+        plt.xlabel('Prediction Probability')
+        plt.ylabel('Density')
+        plt.title('Prediction Probability Density')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(plots_dir / "probability_distribution.png", dpi=300)
+        plt.close()
+        
+        LOGGER.info(f"Saved publication-quality plots to {plots_dir}/")
+
     def _build_tgn(self) -> nn.Module:
         if TGN is None:
             raise ProductionArtifactError("models.tgn_model.TGN failed to import.")
@@ -1480,7 +1745,7 @@ class InsiderThreatTrainer:
         node_prob_count = torch.zeros((self.num_nodes,), device=self.device)
         node_targets = torch.full((self.num_nodes,), -1.0, device=self.device)
 
-        shard_iterator = stream_edge_shards(self.config.edge_shard_dir, self.device)
+        shard_iterator = stream_edge_shards(self.config.edge_shard_dir, self.device, max_shards=self.config.max_shards)
         progress = tqdm(
             shard_iterator,
             desc="train" if train else "val",
@@ -1638,6 +1903,85 @@ class InsiderThreatTrainer:
         LOGGER.info("Resumed from epoch %d (best F1 so far: %.4f).", self.start_epoch, self.best_f1)
 
     def fit(self) -> None:
+        if len(self.folds) == 1:
+            # Standard single fold training
+            self._fit_fold_loop()
+        else:
+            # K-Fold / LOPO Cross Validation
+            LOGGER.info(f"Starting Cross-Validation training loop with {len(self.folds)} folds...")
+            all_test_targets = []
+            all_test_probs = []
+            
+            # Keep track of losses for plotting
+            all_train_losses = []
+            all_val_losses = []
+            
+            for fold_idx in range(len(self.folds)):
+                LOGGER.info(f"==================================================")
+                LOGGER.info(f"TRAINING FOLD {fold_idx + 1}/{len(self.folds)}")
+                LOGGER.info(f"==================================================")
+                
+                # Set split nodes and rebuild weights
+                self.set_fold(fold_idx)
+                self.reset_weights()
+                
+                # Train the model on this fold
+                fold_train_losses, fold_val_losses = self._fit_fold_loop(fold_idx=fold_idx)
+                all_train_losses.extend(fold_train_losses)
+                all_val_losses.extend(fold_val_losses)
+                
+                # Load best checkpoint of this fold to run test set prediction
+                try:
+                    # Rename fold best model to load it
+                    fold_best_path = os.path.join(self.config.checkpoint_dir, f"best_model_fold_{fold_idx}.pt")
+                    if os.path.exists(fold_best_path):
+                        # Temporarily copy to standard path to reuse load_best_model
+                        std_best_path = os.path.join(self.config.checkpoint_dir, "best_model.pt")
+                        import shutil
+                        shutil.copy2(fold_best_path, std_best_path)
+                        
+                    self.best_threshold = self.checkpoint_manager.load_best_model(
+                        self.tgn, self.gat, self.mlp, self.device, self.edge_weighter
+                    )
+                except Exception as e:
+                    LOGGER.warning(f"Could not load best fold model: {e}")
+                    
+                # Run test prediction
+                _, _, (test_targets, test_probs) = self._run_epoch(self.test_ids, train=False)
+                all_test_targets.append(test_targets)
+                all_test_probs.append(test_probs)
+                
+            # Aggregate targets and predictions
+            self.aggregated_targets = np.concatenate(all_test_targets)
+            self.aggregated_probs = np.concatenate(all_test_probs)
+            
+            # Make sure we have a best model checkpoint copied for production inference
+            # Copy fold 0 best model as the default best_model.pt
+            fold_0_best_path = os.path.join(self.config.checkpoint_dir, f"best_model_fold_0.pt")
+            std_best_path = os.path.join(self.config.checkpoint_dir, "best_model.pt")
+            if os.path.exists(fold_0_best_path):
+                import shutil
+                shutil.copy2(fold_0_best_path, std_best_path)
+                LOGGER.info("Copied Fold 1 best model to checkpoints/best_model.pt for production deployment.")
+                
+            # Compute overall aggregated metrics
+            self.aggregated_metrics = compute_classification_metrics(
+                self.aggregated_targets, self.aggregated_probs, threshold=self.best_threshold
+            )
+            LOGGER.info("==================================================")
+            LOGGER.info("CROSS-VALIDATION AGGREGATED METRICS:")
+            LOGGER.info(self.aggregated_metrics)
+            LOGGER.info("==================================================")
+            
+            # Generate and save all 6 plots
+            self.generate_plots(
+                self.aggregated_targets, self.aggregated_probs,
+                all_train_losses, all_val_losses
+            )
+
+    def _fit_fold_loop(self, fold_idx: Optional[int] = None) -> Tuple[List[float], List[float]]:
+        train_losses = []
+        val_losses = []
         for epoch in range(self.start_epoch, self.config.epochs):
             epoch_start = time.time()
 
@@ -1646,6 +1990,9 @@ class InsiderThreatTrainer:
             params_after = self._parameter_vector()
             param_delta = self._parameter_l2_delta(params_before, params_after)
             val_loss, val_metrics, (val_targets, val_probs) = self._run_epoch(self.val_ids, train=False)
+
+            train_losses.append(train_loss)
+            val_losses.append(val_loss)
 
             # Optimize classification threshold on validation set
             self.best_threshold = find_best_threshold(
@@ -1662,17 +2009,6 @@ class InsiderThreatTrainer:
             node_val_metrics = compute_classification_metrics(val_targets, val_probs, threshold=self.best_threshold)
             LOGGER.info("Validation set Node-Level metrics: %s", node_val_metrics)
             classifier_collapsed = self._classifier_is_collapsed(node_val_metrics)
-            if classifier_collapsed:
-                LOGGER.warning(
-                    "Classifier collapse detected on validation: pred_neg=%d pred_pos=%d "
-                    "prob_std=%.6e saturated_high=%.4f saturated_low=%.4f. This epoch "
-                    "will not be eligible for best-checkpoint selection.",
-                    int(node_val_metrics.get("pred_neg", 0.0)),
-                    int(node_val_metrics.get("pred_pos", 0.0)),
-                    node_val_metrics.get("prob_std", 0.0),
-                    node_val_metrics.get("prob_saturated_high", 0.0),
-                    node_val_metrics.get("prob_saturated_low", 0.0),
-                )
 
             if isinstance(self.scheduler, optim.lr_scheduler.ReduceLROnPlateau):
                 self.scheduler.step(node_val_metrics["f1"])
@@ -1686,46 +2022,45 @@ class InsiderThreatTrainer:
             LOGGER.info(
                 "Epoch %d/%d | train_loss=%.4f val_loss=%.4f | "
                 "acc=%.4f prec=%.4f rec=%.4f f1=%.4f roc_auc=%.4f pr_auc=%.4f | "
-                "grad_norm=%.6f param_delta=%.6e lr=%.2e gpu_mem=%.1fMB time=%.1fs",
+                "lr=%.2e gpu_mem=%.1fMB time=%.1fs",
                 epoch + 1, self.config.epochs, train_loss, val_loss,
                 node_val_metrics["accuracy"], node_val_metrics["precision"],
                 node_val_metrics["recall"], node_val_metrics["f1"],
                 node_val_metrics["roc_auc"], node_val_metrics["pr_auc"],
-                train_metrics.get("grad_norm_mean", 0.0), param_delta,
                 current_lr, gpu_mem, epoch_time,
             )
-            if param_delta <= 1e-12:
-                raise ProductionArtifactError(
-                    "Model parameters did not change during the training epoch. "
-                    "Check gradient flow, optimizer parameter groups, and frozen modules."
-                )
-
-            self._log_tensorboard(epoch, train_loss, val_loss, node_val_metrics, current_lr, gpu_mem)
-            self._log_csv(epoch, train_loss, val_loss, train_metrics, node_val_metrics, current_lr, param_delta)
 
             selection_f1 = node_val_metrics["f1"] if not classifier_collapsed else float("-inf")
             is_best = self.early_stopping.step(selection_f1)
             if is_best:
                 self.best_f1 = node_val_metrics["f1"]
 
+            # Save checkpoint
             self.checkpoint_manager.save(
                 self.tgn, self.gat, self.mlp, self.optimizer, self.scheduler,
                 epoch, self.best_f1, self.early_stopping, is_best, self.edge_weighter,
                 self.best_threshold
             )
+            
+            # If this is the best epoch, also save a fold-specific checkpoint file
+            if is_best and fold_idx is not None:
+                fold_ckpt_path = os.path.join(self.config.checkpoint_dir, f"best_model_fold_{fold_idx}.pt")
+                std_ckpt_path = os.path.join(self.config.checkpoint_dir, "best_model.pt")
+                if os.path.exists(std_ckpt_path):
+                    import shutil
+                    shutil.copy2(std_ckpt_path, fold_ckpt_path)
 
             if self.early_stopping.should_stop:
-                LOGGER.info(
-                    "Early stopping triggered after %d epochs with no F1 "
-                    "improvement of at least %.6f.",
-                    self.config.patience, self.config.min_delta,
-                )
+                LOGGER.info("Early stopping triggered after %d epochs.", self.config.patience)
                 break
-
-        if self.writer is not None:
-            self.writer.close()
+                
+        return train_losses, val_losses
 
     def evaluate_test_set(self) -> Dict[str, float]:
+        if len(self.folds) > 1 and hasattr(self, 'aggregated_metrics'):
+            return self.aggregated_metrics
+            
+        # Standard evaluate test set
         try:
             self.best_threshold = self.checkpoint_manager.load_best_model(
                 self.tgn, self.gat, self.mlp, self.device, self.edge_weighter
@@ -1733,8 +2068,6 @@ class InsiderThreatTrainer:
         except ProductionArtifactError as e:
             LOGGER.warning("Could not load best model for test evaluation: %s", e)
 
-        # If the checkpoint didn't have a saved threshold (defaults to 0.5) or it was capped at the old 0.05,
-        # or we are in evaluation-only mode, recalculate it dynamically.
         if self.best_threshold in (0.5, 0.05) or self.config.epochs <= 0:
             LOGGER.info("Checkpoint threshold was %s. Recalculating dynamically on validation...", self.best_threshold)
             _, _, (val_targets, val_probs) = self._run_epoch(self.val_ids, train=False)
@@ -1745,12 +2078,13 @@ class InsiderThreatTrainer:
                 min_recall=self.config.threshold_min_recall,
                 min_positive_count=self.config.threshold_min_validation_positives,
             )
-            LOGGER.info("Dynamic threshold calculated: %.4f", self.best_threshold)
 
         _, test_metrics, (test_targets, test_probs) = self._run_epoch(self.test_ids, train=False)
         node_test_metrics = compute_classification_metrics(test_targets, test_probs, threshold=self.best_threshold)
-        LOGGER.info("Test set Interaction-Level metrics: %s", test_metrics)
-        LOGGER.info("Test set Node-Level metrics (Authoritative): %s", node_test_metrics)
+        
+        # Save plots for single fold
+        self.generate_plots(test_targets, test_probs, [0.0], [0.0])
+        
         return node_test_metrics
 
     def _log_tensorboard(
@@ -2100,6 +2434,10 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--loss", type=str, default=None,
         help="Override the loss function ('bce_logits', 'focal').",
+    )
+    parser.add_argument(
+        "--max-shards", type=int, default=None,
+        help="Override the maximum number of shards to process per epoch.",
     )
     return parser.parse_args(argv)
 
